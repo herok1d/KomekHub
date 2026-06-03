@@ -30,8 +30,10 @@ export function Navbar({
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/92 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <button onClick={() => onNavigate('home')} className="flex items-center gap-3">
-          <img src="/komekhub-mark.png" alt="" className="h-10 w-10 rounded-2xl object-cover shadow-sm" />
-          <img src="/komekhub-logo.png" alt={t('brand')} className="h-8 w-[150px] object-contain object-left sm:w-[174px]" />
+          <img src="/logo-icon.png" alt={t('brand')} className="h-10 w-10 rounded-xl object-contain" />
+          <span className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
+            Komek<span className="text-ocean">Hub</span>
+          </span>
         </button>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -119,8 +121,10 @@ export function Footer({ language, onNavigate }: { language: Language; onNavigat
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_2fr] lg:px-8">
         <div>
           <div className="flex items-center gap-3 text-xl font-extrabold">
-            <img src="/komekhub-mark.png" alt="" className="h-10 w-10 rounded-2xl object-cover shadow-sm" />
-            <img src="/komekhub-logo.png" alt={t('brand')} className="h-8 w-[170px] object-contain object-left" />
+            <img src="/logo-icon.png" alt={t('brand')} className="h-10 w-10 rounded-xl object-contain" />
+            <span className="text-xl font-extrabold tracking-tight text-slate-900">
+              Komek<span className="text-ocean">Hub</span>
+            </span>
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">{t('footerText')}</p>
         </div>
