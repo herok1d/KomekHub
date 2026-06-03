@@ -1,5 +1,6 @@
 import { BookOpen, Building2, CheckCircle2, HeartHandshake, Leaf, Palette, Sparkles, Stethoscope, Users } from 'lucide-react';
 import { categories, opportunities } from '../data/mockData';
+import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Filters, Language, Page } from '../types';
 import { SearchPanel } from '../components/SearchPanel';
@@ -48,6 +49,7 @@ export function HomePage({
               <SearchPanel
                 filters={filters}
                 setFilters={setFilters}
+                language={language}
                 labels={{
                   searchPlaceholder: t('searchPlaceholder'),
                   city: t('city'),
@@ -82,8 +84,10 @@ export function HomePage({
                 <span className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${category.tone}`}>
                   <Icon size={24} />
                 </span>
-                <div className="text-lg font-bold">{category.name}</div>
-                <div className="mt-1 text-sm text-slate-500">{category.count} open opportunities</div>
+                <div className="text-lg font-bold">{labelFor(category.name, language)}</div>
+                <div className="mt-1 text-sm text-slate-500">
+                  {category.count} {t('openOpportunities')}
+                </div>
               </button>
             );
           })}

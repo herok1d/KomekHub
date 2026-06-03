@@ -3,6 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
 import { Toast } from './components/ui';
 import { initialFilters, opportunities } from './data/mockData';
+import { labelFor } from './i18n/labels';
 import { useI18n } from './i18n/useI18n';
 import { DetailPage } from './pages/DetailPage';
 import { HomePage } from './pages/HomePage';
@@ -34,14 +35,21 @@ export default function App() {
         localize(item.title),
         item.organization,
         item.city,
+        labelFor(item.city, language),
         item.category,
+        labelFor(item.category, language),
         localize(item.description),
         localize(item.longDescription),
         item.format,
+        labelFor(item.format, language),
         item.schedule,
+        labelFor(item.schedule, language),
         ...item.tags,
+        ...item.tags.map((tag) => labelFor(tag, language)),
         ...item.badges,
+        ...item.badges.map((badge) => labelFor(badge, language)),
         ...item.languages,
+        ...item.languages.map((itemLanguage) => labelFor(itemLanguage, language)),
       ]
         .join(' ')
         .toLowerCase();
@@ -63,7 +71,7 @@ export default function App() {
       if (filters.sort === 'popular') return b.popularity - a.popularity;
       return b.badges.length + b.popularity + b.volunteerHours / 10 - (a.badges.length + a.popularity + a.volunteerHours / 10);
     });
-  }, [filters, localize]);
+  }, [filters, language, localize]);
 
   function navigate(nextPage: Page) {
     setPage(nextPage);

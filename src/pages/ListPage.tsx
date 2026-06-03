@@ -5,6 +5,7 @@ import { Filters, Language, Opportunity } from '../types';
 import { SearchPanel } from '../components/SearchPanel';
 import { EmptyState } from '../components/ui';
 import { OpportunityCard } from '../components/OpportunityCard';
+import { SelectCombobox } from '../components/ui/SelectCombobox';
 
 export function ListPage({
   language,
@@ -37,20 +38,20 @@ export function ListPage({
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{t('listTitle')}</h1>
           <p className="mt-2 max-w-2xl text-slate-600">{t('listSubtitle')}</p>
         </div>
-        <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <SlidersHorizontal size={18} className="text-slate-500" />
-          <span className="text-sm font-semibold text-slate-600">{t('sortBy')}</span>
-          <select
+        <div className="min-w-[260px]">
+          <SelectCombobox
+            label={t('sortBy')}
             value={filters.sort}
-            onChange={(event) => setFilters({ ...filters, sort: event.target.value as Filters['sort'] })}
-            className="bg-transparent text-sm font-bold focus:outline-none"
-          >
-            <option value="relevant">{t('mostRelevant')}</option>
-            <option value="newest">{t('newest')}</option>
-            <option value="nearest">{t('nearest')}</option>
-            <option value="popular">{t('mostPopular')}</option>
-          </select>
-        </label>
+            onChange={(sort) => setFilters({ ...filters, sort: sort as Filters['sort'] })}
+            icon={<SlidersHorizontal size={17} />}
+            options={[
+              { value: 'relevant', label: t('mostRelevant') },
+              { value: 'newest', label: t('newest') },
+              { value: 'nearest', label: t('nearest') },
+              { value: 'popular', label: t('mostPopular') },
+            ]}
+          />
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -59,6 +60,7 @@ export function ListPage({
           <SearchPanel
             filters={filters}
             setFilters={setFilters}
+            language={language}
             labels={{
               searchPlaceholder: t('searchPlaceholder'),
               city: t('city'),
@@ -72,7 +74,7 @@ export function ListPage({
           />
           <button
             onClick={() => setFilters(initialFilters)}
-            className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+            className="pressable mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-base font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
           >
             {t('resetFilters')}
           </button>

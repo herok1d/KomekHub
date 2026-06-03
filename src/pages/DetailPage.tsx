@@ -1,5 +1,6 @@
 import { BadgeCheck, BriefcaseBusiness, CalendarDays, Languages, MapPin, Star } from 'lucide-react';
 import { organizations, opportunities } from '../data/mockData';
+import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Language, Opportunity } from '../types';
 import { Badge, Pill, SectionHeader } from '../components/ui';
@@ -25,16 +26,16 @@ export function DetailPage({
   const { t, localize } = useI18n(language);
   const organization = organizations.find((item) => item.name === opportunity.organization) ?? organizations[0];
   const related = opportunities.filter((item) => item.category === opportunity.category && item.id !== opportunity.id).slice(0, 2);
+  const badges = Array.from(new Set([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])])).slice(0, 4);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
           <div className="mb-4 flex flex-wrap gap-2">
-            {opportunity.badges.map((badge) => (
-              <Badge key={badge} label={badge} />
+            {badges.map((badge) => (
+              <Badge key={badge} label={badge} language={language} />
             ))}
-            {opportunity.certificate && <Badge label="Certificate" />}
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">{localize(opportunity.title)}</h1>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
@@ -44,7 +45,7 @@ export function DetailPage({
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin size={17} />
-              {opportunity.city}
+              {labelFor(opportunity.city, language)}
             </span>
             <span className="flex items-center gap-1.5">
               <CalendarDays size={17} />
@@ -52,7 +53,7 @@ export function DetailPage({
             </span>
             <span className="flex items-center gap-1.5">
               <Languages size={17} />
-              {opportunity.languages.join(', ')}
+              {opportunity.languages.map((item) => labelFor(item, language)).join(', ')}
             </span>
           </div>
           <p className="mt-8 text-lg leading-8 text-slate-700">{localize(opportunity.longDescription)}</p>
@@ -60,7 +61,7 @@ export function DetailPage({
             <Pill label={`${opportunity.volunteerHours} ${t('volunteerHours')}`} strong />
             {opportunity.certificate && <Pill label={t('certificateAvailable')} strong />}
             {opportunity.tags.map((tag) => (
-              <Pill key={tag} label={tag} />
+              <Pill key={tag} label={tag} language={language} />
             ))}
           </div>
 
@@ -76,13 +77,13 @@ export function DetailPage({
             <button
               onClick={() => onApply(opportunity.id)}
               disabled={appliedIds.includes(opportunity.id)}
-              className="flex w-full items-center justify-center rounded-2xl bg-ocean px-5 py-4 text-sm font-extrabold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-blue-600 disabled:bg-slate-400"
+              className="pressable flex w-full items-center justify-center rounded-2xl bg-ocean px-5 py-4 text-base font-extrabold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-blue-600 disabled:bg-slate-400"
             >
               {appliedIds.includes(opportunity.id) ? t('applied') : t('applyNow')}
             </button>
             <button
               onClick={() => onSave(opportunity.id)}
-              className="mt-3 flex w-full items-center justify-center rounded-2xl border border-slate-200 px-5 py-3 text-sm font-extrabold text-slate-700 hover:border-leaf hover:text-leaf"
+              className="pressable mt-3 flex w-full items-center justify-center rounded-2xl border border-slate-200 px-5 py-3 text-base font-extrabold text-slate-700 hover:border-leaf hover:text-leaf"
             >
               {savedIds.includes(opportunity.id) ? t('saved') : t('save')}
             </button>

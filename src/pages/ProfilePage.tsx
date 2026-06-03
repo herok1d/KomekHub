@@ -1,5 +1,6 @@
 import { MapPin } from 'lucide-react';
 import { opportunities } from '../data/mockData';
+import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Language, Opportunity } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
@@ -48,9 +49,17 @@ export function ProfilePage({
           </div>
 
           <div className="grid gap-6">
-            <ProfileChips title={t('languages')} items={['Kazakh', 'Russian', 'English']} />
-            <ProfileChips title={t('interests')} items={['Education', 'IT & Digital', 'Youth', 'Inclusive education', 'Community']} />
-            <ProfileChips title={t('skills')} items={['Mentoring', 'React basics', 'Public speaking', 'SMM', 'Research']} />
+            <ProfileChips title={t('languages')} items={['Kazakh', 'Russian', 'English']} language={language} />
+            <ProfileChips
+              title={t('interests')}
+              items={language === 'ru' ? ['Образование', 'IT и цифровые проекты', 'Молодёжь', 'Инклюзивное образование', 'Сообщество'] : ['Education', 'IT & Digital', 'Youth', 'Inclusive education', 'Community']}
+              language={language}
+            />
+            <ProfileChips
+              title={t('skills')}
+              items={language === 'ru' ? ['Наставничество', 'Основы React', 'Публичные выступления', 'SMM', 'Исследования'] : ['Mentoring', 'React basics', 'Public speaking', 'SMM', 'Research']}
+              language={language}
+            />
             <div>
               <h2 className="mb-3 text-xl font-extrabold">{t('applicationHistory')}</h2>
               <div className="grid gap-3">
@@ -90,13 +99,13 @@ export function ProfilePage({
   );
 }
 
-function ProfileChips({ title, items }: { title: string; items: string[] }) {
+function ProfileChips({ title, items, language }: { title: string; items: string[]; language: Language }) {
   return (
     <div>
       <h2 className="mb-3 text-xl font-extrabold">{title}</h2>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => (
-          <Pill key={item} label={item} />
+          <Pill key={item} label={labelFor(item, language)} />
         ))}
       </div>
     </div>

@@ -90,17 +90,25 @@ export function Navbar({
 
 function LanguageToggle({ language, onLanguageChange }: { language: Language; onLanguageChange: (language: Language) => void }) {
   return (
-    <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-      <Globe2 size={16} className="ml-2 text-slate-500" />
-      {(['en', 'ru'] as Language[]).map((item) => (
-        <button
-          key={item}
-          onClick={() => onLanguageChange(item)}
-          className={classNames('rounded-full px-3 py-1.5 text-xs font-extrabold transition', language === item ? 'bg-ink text-white' : 'text-slate-500 hover:bg-slate-50')}
-        >
-          {item.toUpperCase()}
-        </button>
-      ))}
+    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm">
+      <Globe2 size={16} className="text-slate-500" />
+      <div className="relative grid w-[92px] grid-cols-2 rounded-full bg-slate-100 p-1">
+        <span
+          className={classNames(
+            'absolute bottom-1 top-1 w-[40px] rounded-full bg-ink shadow-sm transition-transform duration-300 ease-out',
+            language === 'ru' ? 'translate-x-[44px]' : 'translate-x-0',
+          )}
+        />
+        {(['en', 'ru'] as Language[]).map((item) => (
+          <button
+            key={item}
+            onClick={() => onLanguageChange(item)}
+            className={classNames('relative z-10 rounded-full px-2 py-1.5 text-xs font-extrabold transition-colors duration-300', language === item ? 'text-white' : 'text-slate-500 hover:text-ink')}
+          >
+            {item.toUpperCase()}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { ArrowRight, Bookmark, BookmarkCheck, Building2, CalendarDays, Clock, Languages, MapPin, Send } from 'lucide-react';
+import { labelFor } from '../i18n/labels';
 import { Language, Opportunity } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { Badge, Pill } from './ui';
@@ -22,16 +23,16 @@ export function OpportunityCard({
   onSave: () => void;
 }) {
   const { t, localize } = useI18n(language);
+  const badges = Array.from(new Set([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])])).slice(0, 4);
 
   return (
-    <article className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition hover:-translate-y-1 hover:border-ocean/30 hover:shadow-lift sm:p-6">
+    <article className="group flex min-h-[360px] flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-ocean/30 hover:shadow-lift sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-3 flex flex-wrap gap-2">
-            {opportunity.badges.map((badge) => (
-              <Badge key={badge} label={badge} />
+            {badges.map((badge) => (
+              <Badge key={badge} label={badge} language={language} />
             ))}
-            {opportunity.certificate && <Badge label="Certificate" />}
           </div>
           <button onClick={onOpen} className="text-left text-xl font-extrabold tracking-tight transition group-hover:text-ocean">
             {localize(opportunity.title)}
@@ -43,7 +44,7 @@ export function OpportunityCard({
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin size={16} />
-              {opportunity.city}
+              {labelFor(opportunity.city, language)}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock size={16} />
@@ -63,11 +64,11 @@ export function OpportunityCard({
         </button>
       </div>
 
-      <p className="mt-4 text-sm leading-6 text-slate-600">{localize(opportunity.description)}</p>
-      <div className="mt-4 grid gap-2 text-sm font-semibold text-slate-500 sm:grid-cols-2">
+      <p className="mt-4 text-[15px] leading-7 text-slate-600">{localize(opportunity.description)}</p>
+      <div className="mt-4 grid gap-2 text-[15px] font-semibold text-slate-500 sm:grid-cols-2">
         <span className="flex items-center gap-2">
           <Languages size={17} />
-          {opportunity.languages.join(', ')}
+          {opportunity.languages.map((item) => labelFor(item, language)).join(', ')}
         </span>
         <span className="flex items-center gap-2">
           <CalendarDays size={17} />
@@ -76,26 +77,26 @@ export function OpportunityCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Pill label={opportunity.format} strong={opportunity.format === 'Online'} />
-        <Pill label={opportunity.schedule} />
+        <Pill label={opportunity.format} strong={opportunity.format === 'Online'} language={language} />
+        <Pill label={opportunity.schedule} language={language} />
         {opportunity.tags.slice(0, 4).map((tag) => (
-          <Pill key={tag} label={tag} />
+          <Pill key={tag} label={tag} language={language} />
         ))}
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-auto flex flex-col gap-3 pt-5 sm:flex-row">
         <button
           onClick={onApply}
           disabled={isApplied}
           className={classNames(
-            'flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-extrabold text-white transition',
+            'pressable flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-extrabold text-white transition',
             isApplied ? 'bg-slate-400' : 'bg-leaf hover:-translate-y-0.5 hover:bg-emerald-700',
           )}
         >
           <Send size={17} />
           {isApplied ? t('applied') : t('apply')}
         </button>
-        <button onClick={onOpen} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-extrabold text-ink transition hover:border-ocean hover:text-ocean">
+        <button onClick={onOpen} className="pressable flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-base font-extrabold text-ink transition hover:border-ocean hover:text-ocean">
           {t('viewDetails')}
           <ArrowRight size={17} />
         </button>

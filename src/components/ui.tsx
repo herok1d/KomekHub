@@ -1,34 +1,8 @@
 import { ReactNode } from 'react';
-import { ArrowRight, ChevronDown, Search } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
+import { labelFor } from '../i18n/labels';
+import { Language } from '../types';
 import { classNames } from '../utils/classNames';
-
-export function Select({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="relative block">
-      <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 pr-10 text-sm font-semibold text-ink shadow-sm focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
-      >
-        {options.map((option) => (
-          <option key={option}>{option}</option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute bottom-3.5 right-3 text-slate-400" size={17} />
-    </label>
-  );
-}
 
 export function SearchInput({
   value,
@@ -46,7 +20,7 @@ export function SearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-14 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-sm font-medium text-ink shadow-sm focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
+        className="h-14 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-medium text-ink shadow-sm transition focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
       />
     </div>
   );
@@ -82,7 +56,7 @@ export function SectionHeader({
   );
 }
 
-export function Badge({ label }: { label: string }) {
+export function Badge({ label, language = 'en' }: { label: string; language?: Language }) {
   const tone =
     label === 'Urgent'
       ? 'bg-rose-50 text-rose-700'
@@ -92,11 +66,11 @@ export function Badge({ label }: { label: string }) {
           ? 'bg-amber-50 text-amber-700'
           : 'bg-mint text-leaf';
 
-  return <span className={classNames('rounded-full px-3 py-1 text-xs font-extrabold', tone)}>{label}</span>;
+  return <span className={classNames('rounded-full px-3.5 py-1.5 text-[13px] font-extrabold leading-none', tone)}>{labelFor(label, language)}</span>;
 }
 
-export function Pill({ label, strong }: { label: string; strong?: boolean }) {
-  return <span className={classNames('rounded-full px-3 py-1 text-xs font-bold', strong ? 'bg-skysoft text-ocean' : 'bg-slate-100 text-slate-600')}>{label}</span>;
+export function Pill({ label, strong, language = 'en' }: { label: string; strong?: boolean; language?: Language }) {
+  return <span className={classNames('rounded-full px-3 py-1.5 text-[13px] font-bold leading-none', strong ? 'bg-skysoft text-ocean' : 'bg-slate-100 text-slate-600')}>{labelFor(label, language)}</span>;
 }
 
 export function EmptyState({ title, text, action, onAction }: { title: string; text: string; action: string; onAction: () => void }) {

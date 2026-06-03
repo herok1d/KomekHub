@@ -1,12 +1,14 @@
 import { FormEvent, useState } from 'react';
 import { Send } from 'lucide-react';
 import { categories, cities, formats, schedules } from '../data/mockData';
+import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Language } from '../types';
-import { Select } from '../components/ui';
+import { SelectCombobox } from '../components/ui/SelectCombobox';
 
 export function PostOpportunityPage({ language, onPublished }: { language: Language; onPublished: () => void }) {
   const { t } = useI18n(language);
+  const toOptions = (values: string[]) => values.map((value) => ({ value, label: labelFor(value, language) }));
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -44,16 +46,16 @@ export function PostOpportunityPage({ language, onPublished }: { language: Langu
         <div className="grid gap-5 md:grid-cols-2">
           <Field label={t('title')} value={form.title} placeholder={t('titlePlaceholder')} onChange={(title) => setForm({ ...form, title })} />
           <Field label={t('duration')} value={form.duration} placeholder={t('durationPlaceholder')} onChange={(duration) => setForm({ ...form, duration })} />
-          <Select label={t('city')} value={form.city} options={cities.filter((city) => city !== 'All Kazakhstan')} onChange={(city) => setForm({ ...form, city })} />
-          <Select label={t('format')} value={form.format} options={formats.filter((format) => format !== 'All formats')} onChange={(format) => setForm({ ...form, format })} />
-          <Select label={t('category')} value={form.category} options={categories.map((category) => category.name)} onChange={(category) => setForm({ ...form, category })} />
-          <Select label={t('schedule')} value={form.schedule} options={schedules.filter((schedule) => schedule !== 'Any schedule')} onChange={(schedule) => setForm({ ...form, schedule })} />
+          <SelectCombobox label={t('city')} value={form.city} options={toOptions(cities.filter((city) => city !== 'All Kazakhstan'))} onChange={(city) => setForm({ ...form, city })} />
+          <SelectCombobox label={t('format')} value={form.format} options={toOptions(formats.filter((format) => format !== 'All formats'))} onChange={(format) => setForm({ ...form, format })} />
+          <SelectCombobox label={t('category')} value={form.category} options={toOptions(categories.map((category) => category.name))} onChange={(category) => setForm({ ...form, category })} />
+          <SelectCombobox label={t('schedule')} value={form.schedule} options={toOptions(schedules.filter((schedule) => schedule !== 'Any schedule'))} onChange={(schedule) => setForm({ ...form, schedule })} />
           <Field label={t('contacts')} value={form.contacts} placeholder={t('contactsPlaceholder')} onChange={(contacts) => setForm({ ...form, contacts })} />
           <TextArea label={t('description')} value={form.description} placeholder={t('descriptionPlaceholder')} onChange={(description) => setForm({ ...form, description })} />
           <TextArea label={t('requirements')} value={form.requirements} placeholder={t('requirementsPlaceholder')} onChange={(requirements) => setForm({ ...form, requirements })} />
         </div>
         {error && <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</p>}
-        <button className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-leaf px-5 py-4 text-sm font-extrabold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-emerald-700">
+        <button className="pressable mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-leaf px-5 py-4 text-base font-extrabold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-emerald-700">
           {t('publish')}
           <Send size={18} />
         </button>

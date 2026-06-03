@@ -1,5 +1,6 @@
 import { BriefcaseBusiness, Star } from 'lucide-react';
 import { opportunities, organizations } from '../data/mockData';
+import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Language, Page } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
@@ -39,7 +40,7 @@ export function OrganizationPage({
           </div>
           <button
             onClick={() => onNavigate('post')}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3.5 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:shadow-lift"
+            className="pressable mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3.5 text-base font-extrabold text-white transition hover:-translate-y-0.5 hover:shadow-lift"
           >
             <BriefcaseBusiness size={18} />
             {t('postOpportunity')}
@@ -55,7 +56,7 @@ export function OrganizationPage({
                   <img src={org.logo} alt={org.name} className="h-14 w-14 rounded-2xl object-cover" />
                   <div>
                     <h3 className="font-extrabold">{org.name}</h3>
-                    <p className="text-sm font-semibold text-slate-500">{org.city}</p>
+                    <p className="text-sm font-semibold text-slate-500">{labelFor(org.city, language)}</p>
                   </div>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{localize(org.description)}</p>
