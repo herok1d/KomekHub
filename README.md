@@ -1,6 +1,8 @@
-# KindWorks Volunteer Board
+# KomekHub
 
-Modern React + TypeScript + Tailwind CSS demo app for finding volunteer opportunities.
+A modern volunteer opportunity platform for Kazakhstan, helping people find meaningful ways to support their community.
+
+Built with React, TypeScript, Vite, and Tailwind CSS.
 
 ## Run locally
 
