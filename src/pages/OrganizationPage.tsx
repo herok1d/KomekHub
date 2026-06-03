@@ -40,7 +40,7 @@ export function OrganizationPage({
           </div>
           <button
             onClick={() => onNavigate('post')}
-            className="pressable mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3.5 text-base font-extrabold text-white transition hover:-translate-y-0.5 hover:shadow-lift"
+            className="pressable mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3.5 text-base font-extrabold text-white transition hover:bg-slate-800"
           >
             <BriefcaseBusiness size={18} />
             {t('postOpportunity')}

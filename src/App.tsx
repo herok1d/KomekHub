@@ -99,7 +99,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-mist text-ink">
+    <div className={`min-h-screen bg-mist text-ink ${language === 'ru' ? 'ru-copy' : ''}`}>
       <Navbar
         activePage={page}
         language={language}

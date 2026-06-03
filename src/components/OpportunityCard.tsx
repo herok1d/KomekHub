@@ -4,6 +4,7 @@ import { Language, Opportunity } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { Badge, Pill } from './ui';
 import { classNames } from '../utils/classNames';
+import { detailTags, sortedUniqueBadges } from '../utils/badges';
 
 export function OpportunityCard({
   opportunity,
@@ -23,10 +24,11 @@ export function OpportunityCard({
   onSave: () => void;
 }) {
   const { t, localize } = useI18n(language);
-  const badges = Array.from(new Set([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])])).slice(0, 4);
+  const badges = sortedUniqueBadges([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])]).slice(0, 3);
+  const tags = detailTags([opportunity.format, opportunity.schedule, ...opportunity.tags], badges).slice(0, 5);
 
   return (
-    <article className="group flex min-h-[360px] flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-ocean/30 hover:shadow-lift sm:p-6">
+    <article className="group flex min-h-[360px] flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition-shadow duration-200 hover:border-ocean/30 hover:shadow-lift sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="mb-3 flex flex-wrap gap-2">
@@ -77,10 +79,8 @@ export function OpportunityCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Pill label={opportunity.format} strong={opportunity.format === 'Online'} language={language} />
-        <Pill label={opportunity.schedule} language={language} />
-        {opportunity.tags.slice(0, 4).map((tag) => (
-          <Pill key={tag} label={tag} language={language} />
+        {tags.map((tag) => (
+          <Pill key={tag} label={tag} strong={tag === 'Online'} language={language} />
         ))}
       </div>
 
@@ -90,7 +90,7 @@ export function OpportunityCard({
           disabled={isApplied}
           className={classNames(
             'pressable flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-extrabold text-white transition',
-            isApplied ? 'bg-slate-400' : 'bg-leaf hover:-translate-y-0.5 hover:bg-emerald-700',
+            isApplied ? 'bg-slate-400' : 'bg-leaf hover:bg-emerald-700',
           )}
         >
           <Send size={17} />

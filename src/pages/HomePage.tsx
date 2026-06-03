@@ -79,7 +79,7 @@ export function HomePage({
                   setFilters({ ...filters, category: category.name });
                   onNavigate('list');
                 }}
-                className="group rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-1 hover:border-ocean/30 hover:shadow-lift"
+                className="group rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-soft transition-shadow duration-200 hover:border-ocean/30 hover:shadow-lift"
               >
                 <span className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${category.tone}`}>
                   <Icon size={24} />

@@ -1,7 +1,7 @@
 import { Language } from '../types';
 
 const labels: Record<string, Record<Language, string>> = {
-  'All Kazakhstan': { en: 'All Kazakhstan', ru: 'Весь Казахстан' },
+  'All Kazakhstan': { en: 'All Kazakhstan', ru: 'Все города' },
   'All categories': { en: 'All categories', ru: 'Все категории' },
   'All formats': { en: 'All formats', ru: 'Все форматы' },
   'Any schedule': { en: 'Any schedule', ru: 'Любой график' },

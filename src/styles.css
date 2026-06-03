@@ -45,10 +45,15 @@ textarea {
   @apply focus:outline-none focus:ring-4 focus:ring-ocean/15 focus:border-ocean;
 }
 
+.ru-copy p,
+.ru-copy li {
+  line-height: 1.75;
+}
+
 main > section,
 main > div,
 main > form {
-  animation: section-in 520ms ease both;
+  animation: section-fade 220ms ease both;
 }
 
 .pressable {
@@ -61,18 +66,16 @@ main > form {
 }
 
 .pressable:active {
-  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.98);
 }
 
-@keyframes section-in {
+@keyframes section-fade {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

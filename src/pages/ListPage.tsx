@@ -32,29 +32,15 @@ export function ListPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+      <div className="mb-6">
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-leaf">{t('marketplace')}</p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{t('listTitle')}</h1>
           <p className="mt-2 max-w-2xl text-slate-600">{t('listSubtitle')}</p>
         </div>
-        <div className="min-w-[260px]">
-          <SelectCombobox
-            label={t('sortBy')}
-            value={filters.sort}
-            onChange={(sort) => setFilters({ ...filters, sort: sort as Filters['sort'] })}
-            icon={<SlidersHorizontal size={17} />}
-            options={[
-              { value: 'relevant', label: t('mostRelevant') },
-              { value: 'newest', label: t('newest') },
-              { value: 'nearest', label: t('nearest') },
-              { value: 'popular', label: t('mostPopular') },
-            ]}
-          />
-        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
           <div className="mb-4 text-lg font-extrabold">{t('filters')}</div>
           <SearchPanel
@@ -80,9 +66,25 @@ export function ListPage({
           </button>
         </aside>
 
-        <section>
-          <div className="mb-4 text-sm font-semibold text-slate-500">
-            {opportunities.length} {t('found')}
+        <section className="min-w-0">
+          <div className="relative z-20 mb-4 flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft sm:flex-row sm:items-end sm:justify-between">
+            <div className="text-base font-extrabold text-slate-700">
+              {opportunities.length} {t('found')}
+            </div>
+            <div className="w-full sm:w-[280px]">
+              <SelectCombobox
+                label={t('sortBy')}
+                value={filters.sort}
+                onChange={(sort) => setFilters({ ...filters, sort: sort as Filters['sort'] })}
+                icon={<SlidersHorizontal size={17} />}
+                options={[
+                  { value: 'relevant', label: t('mostRelevant') },
+                  { value: 'newest', label: t('newest') },
+                  { value: 'nearest', label: t('nearest') },
+                  { value: 'popular', label: t('mostPopular') },
+                ]}
+              />
+            </div>
           </div>
           {opportunities.length === 0 ? (
             <EmptyState title={t('noResultsTitle')} text={t('noResultsText')} action={t('resetFilters')} onAction={() => setFilters(initialFilters)} />

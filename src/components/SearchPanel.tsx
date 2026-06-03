@@ -33,7 +33,7 @@ export function SearchPanel({
   return (
     <div className="grid gap-3">
       <SearchInput value={filters.query} placeholder={labels.searchPlaceholder} onChange={(query) => setFilters({ ...filters, query })} />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <SelectCombobox label={labels.city} value={filters.city} options={toOptions(cities)} onChange={(city) => setFilters({ ...filters, city })} />
         <SelectCombobox label={labels.category} value={filters.category} options={toOptions(categoryOptions)} onChange={(category) => setFilters({ ...filters, category })} />
         <SelectCombobox label={labels.format} value={filters.format} options={toOptions(formats)} onChange={(format) => setFilters({ ...filters, format })} />
@@ -44,7 +44,7 @@ export function SearchPanel({
       {onSearch && (
         <button
           onClick={onSearch}
-          className="pressable flex h-14 items-center justify-center gap-2 rounded-2xl bg-ocean px-6 text-base font-extrabold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-blue-600"
+          className="pressable flex h-14 items-center justify-center gap-2 rounded-2xl bg-ocean px-6 text-base font-extrabold text-white shadow-soft transition hover:bg-blue-600"
         >
           {labels.searchButton}
           <ArrowRight size={18} />

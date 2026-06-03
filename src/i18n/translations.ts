@@ -124,7 +124,7 @@ export const translations = {
     navOpportunities: 'Волонтёрства',
     navOrganizations: 'Организации',
     navProfile: 'Профиль',
-    postOpportunity: 'Разместить',
+    postOpportunity: 'Добавить возможность',
     heroBadge: 'Платформа волонтёрства в Казахстане',
     heroTitle: 'Найдите волонтёрство, которое действительно важно',
     heroSubtitle:

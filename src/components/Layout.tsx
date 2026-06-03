@@ -1,4 +1,4 @@
-import { Bell, Globe2, HeartHandshake, Menu, X } from 'lucide-react';
+import { Bell, Globe2, Menu, X } from 'lucide-react';
 import { Language, Page } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { classNames } from '../utils/classNames';
@@ -30,10 +30,8 @@ export function Navbar({
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/92 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <button onClick={() => onNavigate('home')} className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-ink text-white shadow-soft">
-            <HeartHandshake size={22} />
-          </span>
-          <span className="text-xl font-extrabold tracking-tight">{t('brand')}</span>
+          <img src="/komekhub-mark.png" alt="" className="h-10 w-10 rounded-2xl object-cover shadow-sm" />
+          <img src="/komekhub-logo.png" alt={t('brand')} className="h-8 w-[150px] object-contain object-left sm:w-[174px]" />
         </button>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -58,7 +56,7 @@ export function Navbar({
           </button>
           <button
             onClick={() => onNavigate('post')}
-            className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift"
+            className="pressable rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-slate-800"
           >
             {t('postOpportunity')}
           </button>
@@ -121,10 +119,8 @@ export function Footer({ language, onNavigate }: { language: Language; onNavigat
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_2fr] lg:px-8">
         <div>
           <div className="flex items-center gap-3 text-xl font-extrabold">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-ink text-white">
-              <HeartHandshake size={21} />
-            </span>
-            {t('brand')}
+            <img src="/komekhub-mark.png" alt="" className="h-10 w-10 rounded-2xl object-cover shadow-sm" />
+            <img src="/komekhub-logo.png" alt={t('brand')} className="h-8 w-[170px] object-contain object-left" />
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">{t('footerText')}</p>
         </div>

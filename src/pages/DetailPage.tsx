@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/useI18n';
 import { Language, Opportunity } from '../types';
 import { Badge, Pill, SectionHeader } from '../components/ui';
 import { OpportunityCard } from '../components/OpportunityCard';
+import { detailTags, sortedUniqueBadges } from '../utils/badges';
 
 export function DetailPage({
   language,
@@ -26,7 +27,8 @@ export function DetailPage({
   const { t, localize } = useI18n(language);
   const organization = organizations.find((item) => item.name === opportunity.organization) ?? organizations[0];
   const related = opportunities.filter((item) => item.category === opportunity.category && item.id !== opportunity.id).slice(0, 2);
-  const badges = Array.from(new Set([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])])).slice(0, 4);
+  const badges = sortedUniqueBadges([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])]).slice(0, 3);
+  const tags = detailTags(opportunity.tags, badges);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -60,7 +62,7 @@ export function DetailPage({
           <div className="mt-5 flex flex-wrap gap-2">
             <Pill label={`${opportunity.volunteerHours} ${t('volunteerHours')}`} strong />
             {opportunity.certificate && <Pill label={t('certificateAvailable')} strong />}
-            {opportunity.tags.map((tag) => (
+            {tags.map((tag) => (
               <Pill key={tag} label={tag} language={language} />
             ))}
           </div>
@@ -77,7 +79,7 @@ export function DetailPage({
             <button
               onClick={() => onApply(opportunity.id)}
               disabled={appliedIds.includes(opportunity.id)}
-              className="pressable flex w-full items-center justify-center rounded-2xl bg-ocean px-5 py-4 text-base font-extrabold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-blue-600 disabled:bg-slate-400"
+              className="pressable flex w-full items-center justify-center rounded-2xl bg-ocean px-5 py-4 text-base font-extrabold text-white shadow-soft transition hover:bg-blue-600 disabled:bg-slate-400"
             >
               {appliedIds.includes(opportunity.id) ? t('applied') : t('applyNow')}
             </button>
