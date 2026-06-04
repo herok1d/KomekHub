@@ -1,8 +1,7 @@
 import { BadgeCheck, BriefcaseBusiness, CalendarDays, Languages, MapPin, Star } from 'lucide-react';
-import { organizations, opportunities } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
-import { Language, Opportunity } from '../types';
+import { Language, Opportunity, Organization } from '../types';
 import { Badge, Pill, SectionHeader } from '../components/ui';
 import { OpportunityCard } from '../components/OpportunityCard';
 import { detailTags, sortedUniqueBadges } from '../utils/badges';
@@ -10,6 +9,8 @@ import { detailTags, sortedUniqueBadges } from '../utils/badges';
 export function DetailPage({
   language,
   opportunity,
+  opportunities,
+  organizations,
   savedIds,
   appliedIds,
   onApply,
@@ -18,14 +19,16 @@ export function DetailPage({
 }: {
   language: Language;
   opportunity: Opportunity;
-  savedIds: number[];
-  appliedIds: number[];
-  onApply: (id: number) => void;
-  onSave: (id: number) => void;
-  onOpenOpportunity: (id: number) => void;
+  opportunities: Opportunity[];
+  organizations: Organization[];
+  savedIds: string[];
+  appliedIds: string[];
+  onApply: (id: string) => void;
+  onSave: (id: string) => void;
+  onOpenOpportunity: (id: string) => void;
 }) {
   const { t, localize } = useI18n(language);
-  const organization = organizations.find((item) => item.name === opportunity.organization) ?? organizations[0];
+  const organization = organizations.find((item) => item.id === opportunity.organizationId || item.name === opportunity.organization);
   const related = opportunities.filter((item) => item.category === opportunity.category && item.id !== opportunity.id).slice(0, 2);
   const badges = sortedUniqueBadges([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])]).slice(0, 3);
   const tags = detailTags(opportunity.tags, badges);
@@ -93,10 +96,12 @@ export function DetailPage({
 
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
             <h2 className="text-lg font-extrabold">{t('aboutOrganization')}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{localize(organization.description)}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              {organization ? localize(organization.description) : opportunity.organization}
+            </p>
             <div className="mt-4 flex items-center gap-2 text-sm font-bold text-amber-600">
               <Star size={17} fill="currentColor" />
-              {organization.rating} {t('averageRating')}
+              {organization?.rating ?? '4.8'} {t('averageRating')}
             </div>
           </div>
         </aside>
@@ -105,7 +110,7 @@ export function DetailPage({
       <section className="mt-8">
         <SectionHeader eyebrow={t('keepExploring')} title={t('similarVolunteering')} />
         <div className="grid gap-5 md:grid-cols-2">
-          {(related.length ? related : opportunities.slice(0, 2)).map((item) => (
+          {(related.length ? related : opportunities.filter((item) => item.id !== opportunity.id).slice(0, 2)).map((item) => (
             <OpportunityCard
               key={item.id}
               opportunity={item}

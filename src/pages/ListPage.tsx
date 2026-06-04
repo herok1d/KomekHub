@@ -22,11 +22,11 @@ export function ListPage({
   filters: Filters;
   setFilters: (filters: Filters) => void;
   opportunities: Opportunity[];
-  onOpenOpportunity: (id: number) => void;
-  onApply: (id: number) => void;
-  savedIds: number[];
-  appliedIds: number[];
-  onSave: (id: number) => void;
+  onOpenOpportunity: (id: string) => void;
+  onApply: (id: string) => void;
+  savedIds: string[];
+  appliedIds: string[];
+  onSave: (id: string) => void;
 }) {
   const { t } = useI18n(language);
 

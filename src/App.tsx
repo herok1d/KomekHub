@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
-import { Toast } from './components/ui';
+import { EmptyState, Toast } from './components/ui';
 import { createCertificateFromApplication, currentUserId, currentVolunteerName, initialApplications, initialCertificates } from './data/applications';
-import { initialFilters, opportunities } from './data/mockData';
+import { initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
 import { useI18n } from './i18n/useI18n';
 import { DetailPage } from './pages/DetailPage';
@@ -12,22 +12,55 @@ import { ListPage } from './pages/ListPage';
 import { OrganizationPage } from './pages/OrganizationPage';
 import { PostOpportunityPage } from './pages/PostOpportunityPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { Application, ApplicationStatus, Certificate, Filters, Language, Page } from './types';
+import { Application, ApplicationStatus, Certificate, Filters, Language, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
 import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
+import { getOpportunities } from './services/opportunityService';
+import { getOrganizations } from './services/organizationService';
 
 export default function App() {
   const [page, setPage] = useState<Page>('home');
-  const [selectedId, setSelectedId] = useState(1);
+  const [selectedId, setSelectedId] = useState('');
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [dataError, setDataError] = useState('');
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [certificateToVerify, setCertificateToVerify] = useState('');
   const [language, setLanguage] = useLocalStorageState<Language>('komekhub-language', 'en');
-  const [savedIds, setSavedIds] = useLocalStorageState<number[]>('komekhub-saved-opportunities', [1, 5, 10]);
+  const [savedIds, setSavedIds] = useLocalStorageState<string[]>('komekhub-saved-opportunities', []);
   const [applications, setApplications] = useLocalStorageState<Application[]>('komekhub-applications', initialApplications);
   const [certificates, setCertificates] = useLocalStorageState<Certificate[]>('komekhub-certificates', initialCertificates);
   const { t, localize } = useI18n(language);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSupabaseData() {
+      setIsLoadingData(true);
+      setDataError('');
+      try {
+        const [opportunityRows, organizationRows] = await Promise.all([getOpportunities(), getOrganizations()]);
+        if (!isMounted) return;
+        setOpportunities(opportunityRows);
+        setOrganizations(organizationRows);
+        setSelectedId((current) => current || opportunityRows[0]?.id || '');
+      } catch (error) {
+        if (!isMounted) return;
+        setDataError(error instanceof Error ? error.message : 'Failed to load Supabase data.');
+      } finally {
+        if (isMounted) setIsLoadingData(false);
+      }
+    }
+
+    loadSupabaseData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0];
   const savedOpportunities = opportunities.filter((item) => savedIds.includes(item.id));
@@ -76,7 +109,7 @@ export default function App() {
       if (filters.sort === 'popular') return b.popularity - a.popularity;
       return b.badges.length + b.popularity + b.volunteerHours / 10 - (a.badges.length + a.popularity + a.volunteerHours / 10);
     });
-  }, [filters, language, localize]);
+  }, [filters, language, localize, opportunities]);
 
   function navigate(nextPage: Page) {
     setPage(nextPage);
@@ -84,19 +117,20 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function openOpportunity(id: number) {
+  function openOpportunity(id: string) {
     setSelectedId(id);
     navigate('detail');
   }
 
-  function toggleSaved(id: number) {
+  function toggleSaved(id: string) {
     setSavedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
   }
 
-  function apply(id: number) {
+  function apply(id: string) {
     setApplications((current) => {
       if (current.some((application) => application.opportunityId === id && application.userId === currentUserId)) return current;
-      const opportunity = opportunities.find((item) => item.id === id) ?? opportunities[0];
+      const opportunity = opportunities.find((item) => item.id === id);
+      if (!opportunity) return current;
       return [
         ...current,
         {
@@ -134,7 +168,7 @@ export default function App() {
       const certificateApplication = completedApplication;
       setCertificates((current) => {
         if (current.some((certificate) => certificate.applicationId === applicationId)) return current;
-        return [...current, createCertificateFromApplication(certificateApplication, current.length + 1)];
+        return [...current, createCertificateFromApplication(certificateApplication, current.length + 1, opportunities, organizations)];
       });
       showToast(t('certificateIssued'));
     }
@@ -161,11 +195,21 @@ export default function App() {
         setMobileOpen={setMobileOpen}
       />
 
-      {page === 'home' && (
+      {isLoadingData && (
+        <DataState
+          title={language === 'ru' ? 'Загрузка данных Supabase' : 'Loading Supabase data'}
+          text={language === 'ru' ? 'Загружаем возможности и организации из базы KomekHub.' : 'Fetching opportunities and organizations from your KomekHub database.'}
+        />
+      )}
+      {!isLoadingData && dataError && (
+        <DataState title={language === 'ru' ? 'Не удалось загрузить данные Supabase' : 'Supabase data could not be loaded'} text={dataError} />
+      )}
+      {!isLoadingData && !dataError && page === 'home' && (
         <HomePage
           language={language}
           filters={filters}
           setFilters={setFilters}
+          featuredOpportunities={opportunities.slice(0, 3)}
           onNavigate={navigate}
           onOpenOpportunity={openOpportunity}
           onApply={apply}
@@ -174,7 +218,7 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {page === 'list' && (
+      {!isLoadingData && !dataError && page === 'list' && (
         <ListPage
           language={language}
           filters={filters}
@@ -187,10 +231,12 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {page === 'detail' && (
+      {!isLoadingData && !dataError && page === 'detail' && selectedOpportunity && (
         <DetailPage
           language={language}
           opportunity={selectedOpportunity}
+          opportunities={opportunities}
+          organizations={organizations}
           savedIds={savedIds}
           appliedIds={appliedIds}
           onApply={apply}
@@ -198,9 +244,10 @@ export default function App() {
           onOpenOpportunity={openOpportunity}
         />
       )}
-      {page === 'profile' && (
+      {!isLoadingData && !dataError && page === 'profile' && (
         <ProfilePage
           language={language}
+          opportunities={opportunities}
           savedOpportunities={savedOpportunities}
           applications={applications}
           certificates={certificates}
@@ -211,9 +258,11 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {page === 'organization' && (
+      {!isLoadingData && !dataError && page === 'organization' && (
         <OrganizationPage
           language={language}
+          opportunities={opportunities}
+          organizations={organizations}
           savedIds={savedIds}
           appliedIds={appliedIds}
           applications={applications}
@@ -225,11 +274,19 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {page === 'post' && <PostOpportunityPage language={language} onPublished={() => showToast(t('opportunityPublished'))} />}
-      {page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
+      {!isLoadingData && !dataError && page === 'post' && <PostOpportunityPage language={language} onPublished={() => showToast(t('opportunityPublished'))} />}
+      {!isLoadingData && !dataError && page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
 
       <Footer language={language} onNavigate={navigate} />
       {toast && <Toast message={toast} icon={<ShieldCheck className="text-emerald-300" size={20} />} />}
     </div>
+  );
+}
+
+function DataState({ title, text }: { title: string; text: string }) {
+  return (
+    <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+      <EmptyState title={title} text={text} />
+    </main>
   );
 }

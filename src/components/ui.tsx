@@ -73,7 +73,7 @@ export function Pill({ label, strong, language = 'en' }: { label: string; strong
   return <span className={classNames('rounded-full px-3 py-1.5 text-[13px] font-bold leading-none', strong ? 'bg-skysoft text-ocean' : 'bg-slate-100 text-slate-600')}>{labelFor(label, language)}</span>;
 }
 
-export function EmptyState({ title, text, action, onAction }: { title: string; text: string; action: string; onAction: () => void }) {
+export function EmptyState({ title, text, action, onAction }: { title: string; text: string; action?: string; onAction?: () => void }) {
   return (
     <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-soft">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-mint text-leaf">
@@ -81,9 +81,11 @@ export function EmptyState({ title, text, action, onAction }: { title: string; t
       </div>
       <h2 className="mt-5 text-2xl font-extrabold">{title}</h2>
       <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">{text}</p>
-      <button onClick={onAction} className="mt-6 rounded-2xl bg-ink px-5 py-3 text-sm font-extrabold text-white">
-        {action}
-      </button>
+      {action && (
+        <button onClick={onAction} className="mt-6 rounded-2xl bg-ink px-5 py-3 text-sm font-extrabold text-white">
+          {action}
+        </button>
+      )}
     </div>
   );
 }

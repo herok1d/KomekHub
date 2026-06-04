@@ -1,14 +1,14 @@
 import { Award, Download, MapPin, ShieldCheck } from 'lucide-react';
-import { opportunities } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Application, Certificate, Language, Opportunity } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
-import { Pill, SectionHeader } from '../components/ui';
+import { EmptyState, Pill, SectionHeader } from '../components/ui';
 import { downloadCertificatePdf, formatDate } from '../utils/certificates';
 
 export function ProfilePage({
   language,
+  opportunities,
   savedOpportunities,
   applications,
   certificates,
@@ -19,19 +19,33 @@ export function ProfilePage({
   onSave,
 }: {
   language: Language;
+  opportunities: Opportunity[];
   savedOpportunities: Opportunity[];
   applications: Application[];
   certificates: Certificate[];
-  appliedIds: number[];
-  onOpenOpportunity: (id: number) => void;
+  appliedIds: string[];
+  onOpenOpportunity: (id: string) => void;
   onVerifyCertificate: (certificateNumber: string) => void;
-  onApply: (id: number) => void;
-  onSave: (id: number) => void;
+  onApply: (id: string) => void;
+  onSave: (id: string) => void;
 }) {
   const { t } = useI18n(language);
   const completedApplications = applications.filter((application) => application.status === 'completed');
   const totalCompletedHours = completedApplications.reduce((sum, application) => sum + application.volunteerHours, 0);
   const history = applications.slice(0, 5);
+
+  const emptyApplicationsText =
+    language === 'ru'
+      ? 'Отклики появятся здесь после подачи заявки на реальные возможности из Supabase.'
+      : 'Applications will appear here after you apply to Supabase opportunities.';
+  const emptyCertificatesText =
+    language === 'ru'
+      ? 'Завершённые активности и сертификаты появятся здесь после подтверждения организации.'
+      : 'Completed volunteering activities and certificates will appear here after organization approval.';
+  const emptySavedText =
+    language === 'ru'
+      ? 'Сохранённые возможности из Supabase появятся здесь.'
+      : 'Saved Supabase opportunities will appear here.';
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -47,11 +61,11 @@ export function ProfilePage({
             <h1 className="mt-5 text-3xl font-extrabold">Aigerim Sapar</h1>
             <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-500">
               <MapPin size={17} />
-              {t('profileCity')} · AITU
+              {t('profileCity')} - AITU
             </p>
             <p className="mt-4 text-sm leading-6 text-slate-600">{t('profileSummary')}</p>
             <div className="mt-5 rounded-3xl bg-mist p-5">
-              <div className="text-4xl font-extrabold text-leaf">{148 + totalCompletedHours}</div>
+              <div className="text-4xl font-extrabold text-leaf">{totalCompletedHours}</div>
               <div className="text-sm font-semibold text-slate-600">{t('hoursLogged')}</div>
             </div>
           </div>
@@ -71,17 +85,20 @@ export function ProfilePage({
             <div>
               <h2 className="mb-3 text-xl font-extrabold">{t('applicationHistory')}</h2>
               <div className="grid gap-3">
+                {history.length === 0 && <EmptyState title={t('applicationHistory')} text={emptyApplicationsText} />}
                 {history.map((application) => {
-                  const item = opportunities.find((opportunity) => opportunity.id === application.opportunityId) ?? opportunities[0];
+                  const item = opportunities.find((opportunity) => opportunity.id === application.opportunityId);
+                  if (!item) return null;
                   return (
-                  <button key={application.id} onClick={() => onOpenOpportunity(item.id)} className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-ocean/40">
-                    <span>
-                      <span className="block font-bold">{item.title[language]}</span>
-                      <span className="text-sm text-slate-500">{item.organization}</span>
-                    </span>
-                    <StatusPill status={application.status} label={t(application.status)} />
-                  </button>
-                )})}
+                    <button key={application.id} onClick={() => onOpenOpportunity(item.id)} className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-ocean/40">
+                      <span>
+                        <span className="block font-bold">{item.title[language]}</span>
+                        <span className="text-sm text-slate-500">{item.organization}</span>
+                      </span>
+                      <StatusPill status={application.status} label={t(application.status)} />
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -91,9 +108,11 @@ export function ProfilePage({
       <section className="mt-8">
         <SectionHeader eyebrow={t('completedActivities')} title={t('certificates')} />
         <div className="grid gap-4">
+          {completedApplications.length === 0 && <EmptyState title={t('certificates')} text={emptyCertificatesText} />}
           {completedApplications.map((application) => {
-            const opportunity = opportunities.find((item) => item.id === application.opportunityId) ?? opportunities[0];
+            const opportunity = opportunities.find((item) => item.id === application.opportunityId);
             const certificate = certificates.find((item) => item.applicationId === application.id);
+            if (!opportunity) return null;
             return (
               <div key={application.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
@@ -137,20 +156,24 @@ export function ProfilePage({
 
       <section className="mt-8">
         <SectionHeader eyebrow={t('saved')} title={t('savedVolunteering')} />
-        <div className="grid gap-5 md:grid-cols-2">
-          {savedOpportunities.map((item) => (
-            <OpportunityCard
-              key={item.id}
-              opportunity={item}
-              language={language}
-              onOpen={() => onOpenOpportunity(item.id)}
-              onApply={() => onApply(item.id)}
-              isSaved
-              isApplied={appliedIds.includes(item.id)}
-              onSave={() => onSave(item.id)}
-            />
-          ))}
-        </div>
+        {savedOpportunities.length === 0 ? (
+          <EmptyState title={t('savedVolunteering')} text={emptySavedText} />
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2">
+            {savedOpportunities.map((item) => (
+              <OpportunityCard
+                key={item.id}
+                opportunity={item}
+                language={language}
+                onOpen={() => onOpenOpportunity(item.id)}
+                onApply={() => onApply(item.id)}
+                isSaved
+                isApplied={appliedIds.includes(item.id)}
+                onSave={() => onSave(item.id)}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );

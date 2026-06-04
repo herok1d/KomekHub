@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Award, BriefcaseBusiness, Check, Star, X } from 'lucide-react';
-import { opportunities, organizations } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
-import { Application, ApplicationStatus, Certificate, Language, Page } from '../types';
+import { Application, ApplicationStatus, Certificate, Language, Opportunity, Organization, Page } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
-import { SectionHeader } from '../components/ui';
+import { EmptyState, SectionHeader } from '../components/ui';
 
 export function OrganizationPage({
   language,
+  opportunities,
+  organizations,
   savedIds,
   appliedIds,
   applications,
@@ -20,20 +21,33 @@ export function OrganizationPage({
   onSave,
 }: {
   language: Language;
-  savedIds: number[];
-  appliedIds: number[];
+  opportunities: Opportunity[];
+  organizations: Organization[];
+  savedIds: string[];
+  appliedIds: string[];
   applications: Application[];
   certificates: Certificate[];
   onUpdateApplicationStatus: (applicationId: string, status: ApplicationStatus, volunteerHours?: number) => void;
   onNavigate: (page: Page) => void;
-  onOpenOpportunity: (id: number) => void;
-  onApply: (id: number) => void;
-  onSave: (id: number) => void;
+  onOpenOpportunity: (id: string) => void;
+  onApply: (id: string) => void;
+  onSave: (id: string) => void;
 }) {
   const { t, localize } = useI18n(language);
   const featured = organizations[0];
-  const published = opportunities.filter((item) => item.organization === featured.name).concat(opportunities.slice(1, 3));
+  const published = featured ? opportunities.filter((item) => item.organizationId === featured.id || item.organization === featured.name) : [];
   const dashboardApplications = applications.filter((application) => published.some((item) => item.id === application.opportunityId));
+  const emptyOrganizationsText = language === 'ru' ? 'Supabase пока не вернул организации.' : 'No organizations were returned from Supabase yet.';
+  const emptyPublishedText = language === 'ru' ? 'У этой организации пока нет опубликованных возможностей в Supabase.' : 'This organization has no published Supabase opportunities yet.';
+  const emptyApplicationsText = language === 'ru' ? 'По возможностям этой организации пока нет откликов.' : "No applications for this organization's opportunities yet.";
+
+  if (!featured) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+        <EmptyState title={t('organizationsTitle')} text={emptyOrganizationsText} />
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -59,7 +73,7 @@ export function OrganizationPage({
           <SectionHeader eyebrow={t('navOrganizations')} title={t('organizationsTitle')} />
           <div className="mb-6 grid gap-4 md:grid-cols-2">
             {organizations.map((org) => (
-              <div key={org.name} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+              <div key={org.id ?? org.name} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
                 <div className="flex items-center gap-4">
                   <img src={org.logo} alt={org.name} className="h-14 w-14 rounded-2xl object-cover" />
                   <div>
@@ -73,32 +87,37 @@ export function OrganizationPage({
           </div>
 
           <SectionHeader eyebrow={featured.name} title={t('publishedByOrg')} />
-          <div className="grid gap-5">
-            {published.map((item) => (
-              <OpportunityCard
-                key={item.id}
-                opportunity={item}
-                language={language}
-                onOpen={() => onOpenOpportunity(item.id)}
-                onApply={() => onApply(item.id)}
-                isSaved={savedIds.includes(item.id)}
-                isApplied={appliedIds.includes(item.id)}
-                onSave={() => onSave(item.id)}
-              />
-            ))}
-          </div>
+          {published.length === 0 ? (
+            <EmptyState title={t('noResultsTitle')} text={emptyPublishedText} />
+          ) : (
+            <div className="grid gap-5">
+              {published.map((item) => (
+                <OpportunityCard
+                  key={item.id}
+                  opportunity={item}
+                  language={language}
+                  onOpen={() => onOpenOpportunity(item.id)}
+                  onApply={() => onApply(item.id)}
+                  isSaved={savedIds.includes(item.id)}
+                  isApplied={appliedIds.includes(item.id)}
+                  onSave={() => onSave(item.id)}
+                />
+              ))}
+            </div>
+          )}
 
           <section className="mt-8">
             <SectionHeader eyebrow={t('organizationDashboard')} title={t('applications')} />
             <div className="grid gap-4">
+              {dashboardApplications.length === 0 && <EmptyState title={t('applications')} text={emptyApplicationsText} />}
               {dashboardApplications.map((application) => {
-                const opportunity = opportunities.find((item) => item.id === application.opportunityId) ?? opportunities[0];
+                const opportunity = opportunities.find((item) => item.id === application.opportunityId);
                 const certificate = certificates.find((item) => item.applicationId === application.id);
                 return (
                   <ApplicationRow
                     key={application.id}
                     application={application}
-                    opportunityTitle={opportunity.title[language]}
+                    opportunityTitle={opportunity?.title[language] ?? application.organizationName}
                     certificateIssued={Boolean(certificate)}
                     labels={{
                       applicant: t('applicant'),

@@ -29,9 +29,11 @@ export type Category = {
 };
 
 export type Opportunity = {
-  id: number;
+  id: string;
+  organizationId?: string;
   title: LocalizedText;
   organization: string;
+  organizationLogo?: string;
   city: string;
   format: Format;
   duration: LocalizedText;
@@ -50,14 +52,18 @@ export type Opportunity = {
   postedDaysAgo: number;
   distanceKm: number;
   popularity: number;
+  createdAt?: string;
 };
 
 export type Organization = {
+  id?: string;
   name: string;
   logo: string;
+  logoUrl?: string;
   rating: number;
   reviews: number;
   city: string;
+  contactEmail?: string;
   description: LocalizedText;
 };
 
@@ -65,7 +71,7 @@ export type Application = {
   id: string;
   userId: string;
   volunteerName: string;
-  opportunityId: number;
+  opportunityId: string;
   organizationName: string;
   status: ApplicationStatus;
   appliedAt: string;
@@ -77,7 +83,7 @@ export type Certificate = {
   id: string;
   applicationId: string;
   userId: string;
-  opportunityId: number;
+  opportunityId: string;
   organizationId: string;
   certificateNumber: string;
   volunteerName: string;

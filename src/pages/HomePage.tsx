@@ -1,11 +1,11 @@
 import { BookOpen, Building2, CheckCircle2, HeartHandshake, Leaf, Palette, Sparkles, Stethoscope, Users } from 'lucide-react';
-import { categories, opportunities } from '../data/mockData';
+import { categories } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
-import { Filters, Language, Page } from '../types';
+import { Filters, Language, Opportunity, Page } from '../types';
 import { SearchPanel } from '../components/SearchPanel';
 import { OpportunityCard } from '../components/OpportunityCard';
-import { SectionHeader } from '../components/ui';
+import { EmptyState, SectionHeader } from '../components/ui';
 
 const icons = [BookOpen, Stethoscope, Leaf, HeartHandshake, Users, Sparkles, Palette, Building2];
 
@@ -13,6 +13,7 @@ export function HomePage({
   language,
   filters,
   setFilters,
+  featuredOpportunities,
   onNavigate,
   onOpenOpportunity,
   onApply,
@@ -23,12 +24,13 @@ export function HomePage({
   language: Language;
   filters: Filters;
   setFilters: (filters: Filters) => void;
+  featuredOpportunities: Opportunity[];
   onNavigate: (page: Page) => void;
-  onOpenOpportunity: (id: number) => void;
-  onApply: (id: number) => void;
-  savedIds: number[];
-  appliedIds: number[];
-  onSave: (id: number) => void;
+  onOpenOpportunity: (id: string) => void;
+  onApply: (id: string) => void;
+  savedIds: string[];
+  appliedIds: string[];
+  onSave: (id: string) => void;
 }) {
   const { t } = useI18n(language);
 
@@ -97,20 +99,24 @@ export function HomePage({
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <SectionHeader eyebrow={t('curatedPicks')} title={t('featuredOpportunities')} action={t('seeMore')} onAction={() => onNavigate('list')} />
-          <div className="grid gap-5 lg:grid-cols-3">
-            {opportunities.slice(0, 3).map((item) => (
-              <OpportunityCard
-                key={item.id}
-                opportunity={item}
-                language={language}
-                onOpen={() => onOpenOpportunity(item.id)}
-                onApply={() => onApply(item.id)}
-                isSaved={savedIds.includes(item.id)}
-                isApplied={appliedIds.includes(item.id)}
-                onSave={() => onSave(item.id)}
-              />
-            ))}
-          </div>
+          {featuredOpportunities.length === 0 ? (
+            <EmptyState title={t('noResultsTitle')} text={t('noResultsText')} action={t('browseAll')} onAction={() => onNavigate('list')} />
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-3">
+              {featuredOpportunities.map((item) => (
+                <OpportunityCard
+                  key={item.id}
+                  opportunity={item}
+                  language={language}
+                  onOpen={() => onOpenOpportunity(item.id)}
+                  onApply={() => onApply(item.id)}
+                  isSaved={savedIds.includes(item.id)}
+                  isApplied={appliedIds.includes(item.id)}
+                  onSave={() => onSave(item.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
       <HowItWorks language={language} />
