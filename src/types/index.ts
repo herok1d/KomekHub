@@ -1,9 +1,10 @@
 export type Language = 'en' | 'ru';
-export type Page = 'home' | 'list' | 'detail' | 'profile' | 'organization' | 'post';
+export type Page = 'home' | 'list' | 'detail' | 'profile' | 'organization' | 'post' | 'verify';
 export type Format = 'Offline' | 'Online' | 'Hybrid';
 export type Schedule = 'Few hours' | 'Weekend' | 'Part-time' | 'Project' | 'Flexible';
 export type VolunteerLanguage = 'Kazakh' | 'Russian' | 'English';
 export type SortKey = 'relevant' | 'newest' | 'nearest' | 'popular';
+export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 
 export type LocalizedText = {
   en: string;
@@ -58,4 +59,32 @@ export type Organization = {
   reviews: number;
   city: string;
   description: LocalizedText;
+};
+
+export type Application = {
+  id: string;
+  userId: string;
+  volunteerName: string;
+  opportunityId: number;
+  organizationName: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  completedAt?: string;
+  volunteerHours: number;
+};
+
+export type Certificate = {
+  id: string;
+  applicationId: string;
+  userId: string;
+  opportunityId: number;
+  organizationId: string;
+  certificateNumber: string;
+  volunteerName: string;
+  organizationName: string;
+  opportunityTitle: LocalizedText;
+  city: string;
+  volunteerHours: number;
+  issuedAt: string;
+  certificateUrl?: string;
 };

@@ -24,6 +24,7 @@ export function Navbar({
     { page: 'list', label: t('navOpportunities') },
     { page: 'organization', label: t('navOrganizations') },
     { page: 'profile', label: t('navProfile') },
+    { page: 'verify', label: t('navVerify') },
   ];
 
   return (

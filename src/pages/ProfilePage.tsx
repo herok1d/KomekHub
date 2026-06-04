@@ -1,29 +1,37 @@
-import { MapPin } from 'lucide-react';
+import { Award, Download, MapPin, ShieldCheck } from 'lucide-react';
 import { opportunities } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
-import { Language, Opportunity } from '../types';
+import { Application, Certificate, Language, Opportunity } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
 import { Pill, SectionHeader } from '../components/ui';
+import { downloadCertificatePdf, formatDate } from '../utils/certificates';
 
 export function ProfilePage({
   language,
   savedOpportunities,
+  applications,
+  certificates,
   appliedIds,
   onOpenOpportunity,
+  onVerifyCertificate,
   onApply,
   onSave,
 }: {
   language: Language;
   savedOpportunities: Opportunity[];
+  applications: Application[];
+  certificates: Certificate[];
   appliedIds: number[];
   onOpenOpportunity: (id: number) => void;
+  onVerifyCertificate: (certificateNumber: string) => void;
   onApply: (id: number) => void;
   onSave: (id: number) => void;
 }) {
   const { t } = useI18n(language);
-  const history = opportunities.filter((item) => appliedIds.includes(item.id)).slice(0, 4);
-  const fallbackHistory = history.length ? history : opportunities.slice(0, 3);
+  const completedApplications = applications.filter((application) => application.status === 'completed');
+  const totalCompletedHours = completedApplications.reduce((sum, application) => sum + application.volunteerHours, 0);
+  const history = applications.slice(0, 5);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -43,7 +51,7 @@ export function ProfilePage({
             </p>
             <p className="mt-4 text-sm leading-6 text-slate-600">{t('profileSummary')}</p>
             <div className="mt-5 rounded-3xl bg-mist p-5">
-              <div className="text-4xl font-extrabold text-leaf">148</div>
+              <div className="text-4xl font-extrabold text-leaf">{148 + totalCompletedHours}</div>
               <div className="text-sm font-semibold text-slate-600">{t('hoursLogged')}</div>
             </div>
           </div>
@@ -63,18 +71,67 @@ export function ProfilePage({
             <div>
               <h2 className="mb-3 text-xl font-extrabold">{t('applicationHistory')}</h2>
               <div className="grid gap-3">
-                {fallbackHistory.map((item, index) => (
-                  <button key={item.id} onClick={() => onOpenOpportunity(item.id)} className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-ocean/40">
+                {history.map((application) => {
+                  const item = opportunities.find((opportunity) => opportunity.id === application.opportunityId) ?? opportunities[0];
+                  return (
+                  <button key={application.id} onClick={() => onOpenOpportunity(item.id)} className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-ocean/40">
                     <span>
                       <span className="block font-bold">{item.title[language]}</span>
                       <span className="text-sm text-slate-500">{item.organization}</span>
                     </span>
-                    <span className="rounded-full bg-skysoft px-3 py-1 text-xs font-extrabold text-ocean">{index === 0 ? t('underReview') : t('accepted')}</span>
+                    <StatusPill status={application.status} label={t(application.status)} />
                   </button>
-                ))}
+                )})}
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <SectionHeader eyebrow={t('completedActivities')} title={t('certificates')} />
+        <div className="grid gap-4">
+          {completedApplications.map((application) => {
+            const opportunity = opportunities.find((item) => item.id === application.opportunityId) ?? opportunities[0];
+            const certificate = certificates.find((item) => item.applicationId === application.id);
+            return (
+              <div key={application.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-extrabold text-leaf">
+                      <Award size={18} />
+                      {certificate ? t('certificateIssued') : t('certificateNotReady')}
+                    </div>
+                    <h3 className="text-xl font-extrabold">{opportunity.title[language]}</h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">{application.organizationName}</p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                      <Pill label={`${application.volunteerHours} ${t('volunteerHours')}`} strong />
+                      {certificate && <Pill label={`${t('certificateNumber')}: ${certificate.certificateNumber}`} strong />}
+                      {certificate && <Pill label={`${t('issuedDate')}: ${formatDate(certificate.issuedAt, language)}`} />}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      disabled={!certificate}
+                      onClick={() => certificate && downloadCertificatePdf(certificate, language)}
+                      className="pressable inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white disabled:bg-slate-300"
+                    >
+                      <Download size={17} />
+                      {t('downloadCertificate')}
+                    </button>
+                    <button
+                      disabled={!certificate}
+                      onClick={() => certificate && onVerifyCertificate(certificate.certificateNumber)}
+                      className="pressable inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-extrabold text-slate-700 hover:border-ocean hover:text-ocean disabled:text-slate-300"
+                    >
+                      <ShieldCheck size={17} />
+                      {t('verifyCertificate')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -97,6 +154,18 @@ export function ProfilePage({
       </section>
     </main>
   );
+}
+
+function StatusPill({ status, label }: { status: Application['status']; label: string }) {
+  const tone =
+    status === 'completed'
+      ? 'bg-mint text-leaf'
+      : status === 'accepted'
+        ? 'bg-skysoft text-ocean'
+        : status === 'rejected' || status === 'cancelled'
+          ? 'bg-rose-50 text-rose-700'
+          : 'bg-slate-100 text-slate-600';
+  return <span className={`${tone} rounded-full px-3 py-1 text-xs font-extrabold`}>{label}</span>;
 }
 
 function ProfileChips({ title, items, language }: { title: string; items: string[]; language: Language }) {
