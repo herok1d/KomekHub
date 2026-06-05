@@ -2,24 +2,34 @@ import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
 import { EmptyState, Toast } from './components/ui';
-import { createCertificateFromApplication, currentUserId, currentVolunteerName, initialApplications, initialCertificates } from './data/applications';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { createCertificateFromApplication, initialApplications, initialCertificates } from './data/applications';
 import { initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
 import { useI18n } from './i18n/useI18n';
+import { SignInPage, SignUpPage } from './pages/AuthPages';
 import { DetailPage } from './pages/DetailPage';
 import { HomePage } from './pages/HomePage';
 import { ListPage } from './pages/ListPage';
 import { OrganizationPage } from './pages/OrganizationPage';
 import { PostOpportunityPage } from './pages/PostOpportunityPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
+import { getOrganizations } from './services/organizationService';
+import { getOpportunities } from './services/opportunityService';
 import { Application, ApplicationStatus, Certificate, Filters, Language, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
-import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
-import { getOpportunities } from './services/opportunityService';
-import { getOrganizations } from './services/organizationService';
 
 export default function App() {
-  const [page, setPage] = useState<Page>('home');
+  return (
+    <AuthProvider>
+      <KomekHubApp />
+    </AuthProvider>
+  );
+}
+
+function KomekHubApp() {
+  const [page, setPage] = useState<Page>(() => pageFromPath(window.location.pathname));
   const [selectedId, setSelectedId] = useState('');
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -34,6 +44,7 @@ export default function App() {
   const [applications, setApplications] = useLocalStorageState<Application[]>('komekhub-applications', initialApplications);
   const [certificates, setCertificates] = useLocalStorageState<Certificate[]>('komekhub-certificates', initialCertificates);
   const { t, localize } = useI18n(language);
+  const { user, profile, loading: authLoading, signOut } = useAuth();
 
   useEffect(() => {
     let isMounted = true;
@@ -62,9 +73,20 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    function handlePopState() {
+      setPage(pageFromPath(window.location.pathname));
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0];
   const savedOpportunities = opportunities.filter((item) => savedIds.includes(item.id));
-  const appliedIds = applications.map((application) => application.opportunityId);
+  const visibleApplications = user ? applications.filter((application) => application.userId === user.id) : [];
+  const appliedIds = visibleApplications.map((application) => application.opportunityId);
+  const userLabel = profile?.fullName || user?.email || '';
 
   const filteredOpportunities = useMemo(() => {
     const normalizedQuery = filters.query.trim().toLowerCase();
@@ -111,10 +133,34 @@ export default function App() {
     });
   }, [filters, language, localize, opportunities]);
 
-  function navigate(nextPage: Page) {
+  function setPageAndPath(nextPage: Page) {
     setPage(nextPage);
+    window.history.pushState({}, '', pathForPage(nextPage));
     setMobileOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function navigate(nextPage: Page) {
+    if (nextPage === 'profile' && !user) {
+      showToast(t('signInRequired'));
+      setPageAndPath('sign-in');
+      return;
+    }
+
+    if (nextPage === 'post') {
+      if (!user) {
+        showToast(t('signInRequired'));
+        setPageAndPath('sign-in');
+        return;
+      }
+      if (profile?.role !== 'organization') {
+        showToast(t('organizationRoleRequired'));
+        setMobileOpen(false);
+        return;
+      }
+    }
+
+    setPageAndPath(nextPage);
   }
 
   function openOpportunity(id: string) {
@@ -123,20 +169,31 @@ export default function App() {
   }
 
   function toggleSaved(id: string) {
+    if (!user) {
+      showToast(t('signInRequired'));
+      navigate('sign-in');
+      return;
+    }
     setSavedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
   }
 
   function apply(id: string) {
+    if (!user) {
+      showToast(t('signInRequired'));
+      navigate('sign-in');
+      return;
+    }
+
     setApplications((current) => {
-      if (current.some((application) => application.opportunityId === id && application.userId === currentUserId)) return current;
+      if (current.some((application) => application.opportunityId === id && application.userId === user.id)) return current;
       const opportunity = opportunities.find((item) => item.id === id);
       if (!opportunity) return current;
       return [
         ...current,
         {
           id: `app-${Date.now()}`,
-          userId: currentUserId,
-          volunteerName: currentVolunteerName,
+          userId: user.id,
+          volunteerName: profile?.fullName || user.email || 'KomekHub volunteer',
           opportunityId: id,
           organizationName: opportunity.organization,
           status: 'pending',
@@ -184,6 +241,17 @@ export default function App() {
     navigate('verify');
   }
 
+  async function handleSignOut() {
+    await signOut();
+    showToast(t('signedOut'));
+    setPageAndPath('home');
+  }
+
+  function handleAuthSuccess() {
+    showToast(t('authSuccess'));
+    setPageAndPath('home');
+  }
+
   return (
     <div className={`min-h-screen bg-mist text-ink ${language === 'ru' ? 'ru-copy' : ''}`}>
       <Navbar
@@ -193,18 +261,21 @@ export default function App() {
         onNavigate={navigate}
         onLanguageChange={setLanguage}
         setMobileOpen={setMobileOpen}
+        userLabel={userLabel}
+        userRole={profile?.role}
+        onSignOut={handleSignOut}
       />
 
-      {isLoadingData && (
+      {(isLoadingData || authLoading) && (
         <DataState
           title={language === 'ru' ? 'Загрузка данных Supabase' : 'Loading Supabase data'}
           text={language === 'ru' ? 'Загружаем возможности и организации из базы KomekHub.' : 'Fetching opportunities and organizations from your KomekHub database.'}
         />
       )}
-      {!isLoadingData && dataError && (
+      {!isLoadingData && !authLoading && dataError && (
         <DataState title={language === 'ru' ? 'Не удалось загрузить данные Supabase' : 'Supabase data could not be loaded'} text={dataError} />
       )}
-      {!isLoadingData && !dataError && page === 'home' && (
+      {!isLoadingData && !authLoading && !dataError && page === 'home' && (
         <HomePage
           language={language}
           filters={filters}
@@ -218,7 +289,7 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !dataError && page === 'list' && (
+      {!isLoadingData && !authLoading && !dataError && page === 'list' && (
         <ListPage
           language={language}
           filters={filters}
@@ -231,7 +302,7 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !dataError && page === 'detail' && selectedOpportunity && (
+      {!isLoadingData && !authLoading && !dataError && page === 'detail' && selectedOpportunity && (
         <DetailPage
           language={language}
           opportunity={selectedOpportunity}
@@ -244,12 +315,12 @@ export default function App() {
           onOpenOpportunity={openOpportunity}
         />
       )}
-      {!isLoadingData && !dataError && page === 'profile' && (
+      {!isLoadingData && !authLoading && !dataError && page === 'profile' && user && (
         <ProfilePage
           language={language}
           opportunities={opportunities}
           savedOpportunities={savedOpportunities}
-          applications={applications}
+          applications={visibleApplications}
           certificates={certificates}
           appliedIds={appliedIds}
           onOpenOpportunity={openOpportunity}
@@ -258,7 +329,7 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !dataError && page === 'organization' && (
+      {!isLoadingData && !authLoading && !dataError && page === 'organization' && (
         <OrganizationPage
           language={language}
           opportunities={opportunities}
@@ -274,8 +345,12 @@ export default function App() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !dataError && page === 'post' && <PostOpportunityPage language={language} onPublished={() => showToast(t('opportunityPublished'))} />}
-      {!isLoadingData && !dataError && page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
+      {!isLoadingData && !authLoading && !dataError && page === 'post' && user && profile?.role === 'organization' && (
+        <PostOpportunityPage language={language} onPublished={() => showToast(t('opportunityPublished'))} />
+      )}
+      {!isLoadingData && !authLoading && !dataError && page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
+      {!isLoadingData && !authLoading && !dataError && page === 'sign-in' && <SignInPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
+      {!isLoadingData && !authLoading && !dataError && page === 'sign-up' && <SignUpPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
 
       <Footer language={language} onNavigate={navigate} />
       {toast && <Toast message={toast} icon={<ShieldCheck className="text-emerald-300" size={20} />} />}
@@ -289,4 +364,30 @@ function DataState({ title, text }: { title: string; text: string }) {
       <EmptyState title={title} text={text} />
     </main>
   );
+}
+
+function pageFromPath(pathname: string): Page {
+  if (pathname === '/sign-in') return 'sign-in';
+  if (pathname === '/sign-up') return 'sign-up';
+  if (pathname === '/opportunities') return 'list';
+  if (pathname === '/organizations') return 'organization';
+  if (pathname === '/profile') return 'profile';
+  if (pathname === '/post-opportunity') return 'post';
+  if (pathname === '/verify-certificate') return 'verify';
+  return 'home';
+}
+
+function pathForPage(page: Page) {
+  const paths: Record<Page, string> = {
+    home: '/',
+    list: '/opportunities',
+    detail: '/opportunities/detail',
+    profile: '/profile',
+    organization: '/organizations',
+    post: '/post-opportunity',
+    verify: '/verify-certificate',
+    'sign-in': '/sign-in',
+    'sign-up': '/sign-up',
+  };
+  return paths[page];
 }

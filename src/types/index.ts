@@ -1,5 +1,6 @@
 export type Language = 'en' | 'ru';
-export type Page = 'home' | 'list' | 'detail' | 'profile' | 'organization' | 'post' | 'verify';
+export type Page = 'home' | 'list' | 'detail' | 'profile' | 'organization' | 'post' | 'verify' | 'sign-in' | 'sign-up';
+export type UserRole = 'volunteer' | 'organization';
 export type Format = 'Offline' | 'Online' | 'Hybrid';
 export type Schedule = 'Few hours' | 'Weekend' | 'Part-time' | 'Project' | 'Flexible';
 export type VolunteerLanguage = 'Kazakh' | 'Russian' | 'English';
@@ -65,6 +66,20 @@ export type Organization = {
   city: string;
   contactEmail?: string;
   description: LocalizedText;
+};
+
+export type Profile = {
+  id: string;
+  userId: string;
+  fullName: string;
+  role: UserRole;
+  city: string;
+  avatarUrl?: string;
+  university?: string;
+  languages: string[];
+  skills: string[];
+  interests: string[];
+  volunteerHours: number;
 };
 
 export type Application = {

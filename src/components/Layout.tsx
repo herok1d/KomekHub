@@ -1,5 +1,5 @@
-import { Bell, Globe2, Menu, X } from 'lucide-react';
-import { Language, Page } from '../types';
+import { Globe2, LogOut, Menu, UserCircle, X } from 'lucide-react';
+import { Language, Page, UserRole } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { classNames } from '../utils/classNames';
 
@@ -10,6 +10,9 @@ export function Navbar({
   onNavigate,
   onLanguageChange,
   setMobileOpen,
+  userLabel,
+  userRole,
+  onSignOut,
 }: {
   activePage: Page;
   language: Language;
@@ -17,15 +20,18 @@ export function Navbar({
   onNavigate: (page: Page) => void;
   onLanguageChange: (language: Language) => void;
   setMobileOpen: (open: boolean) => void;
+  userLabel?: string;
+  userRole?: UserRole;
+  onSignOut: () => void;
 }) {
   const { t } = useI18n(language);
   const links: Array<{ page: Page; label: string }> = [
     { page: 'home', label: t('navHome') },
     { page: 'list', label: t('navOpportunities') },
     { page: 'organization', label: t('navOrganizations') },
-    { page: 'profile', label: t('navProfile') },
     { page: 'verify', label: t('navVerify') },
   ];
+  const isLoggedIn = Boolean(userLabel);
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/92 backdrop-blur">
@@ -54,15 +60,36 @@ export function Navbar({
 
         <div className="hidden items-center gap-3 md:flex">
           <LanguageToggle language={language} onLanguageChange={onLanguageChange} />
-          <button className="rounded-full border border-slate-200 p-2 text-slate-600 transition hover:border-ocean hover:text-ocean">
-            <Bell size={18} />
-          </button>
-          <button
-            onClick={() => onNavigate('post')}
-            className="pressable rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-slate-800"
-          >
-            {t('postOpportunity')}
-          </button>
+          {isLoggedIn ? (
+            <>
+              <span className="max-w-[180px] truncate rounded-full bg-slate-100 px-3 py-2 text-sm font-extrabold text-slate-700">{userLabel}</span>
+              <button onClick={() => onNavigate('profile')} className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-ocean hover:text-ocean">
+                <UserCircle size={17} />
+                {t('navProfile')}
+              </button>
+              <button onClick={onSignOut} className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-rose-300 hover:text-rose-700">
+                <LogOut size={17} />
+                {t('signOut')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => onNavigate('sign-in')} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-ocean hover:text-ocean">
+                {t('signIn')}
+              </button>
+              <button onClick={() => onNavigate('sign-up')} className="pressable rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-slate-800">
+                {t('signUp')}
+              </button>
+            </>
+          )}
+          {userRole === 'organization' && (
+            <button
+              onClick={() => onNavigate('post')}
+              className="pressable rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-slate-800"
+            >
+              {t('postOpportunity')}
+            </button>
+          )}
         </div>
 
         <button className="rounded-xl border border-slate-200 p-2 md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -79,9 +106,31 @@ export function Navbar({
                 {link.label}
               </button>
             ))}
-            <button onClick={() => onNavigate('post')} className="rounded-xl bg-ink px-4 py-3 text-left text-sm font-bold text-white">
-              {t('postOpportunity')}
-            </button>
+            {isLoggedIn ? (
+              <>
+                <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-700">{userLabel}</div>
+                <button onClick={() => onNavigate('profile')} className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                  {t('navProfile')}
+                </button>
+                {userRole === 'organization' && (
+                  <button onClick={() => onNavigate('post')} className="rounded-xl bg-ink px-4 py-3 text-left text-sm font-bold text-white">
+                    {t('postOpportunity')}
+                  </button>
+                )}
+                <button onClick={onSignOut} className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">
+                  {t('signOut')}
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => onNavigate('sign-in')} className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                  {t('signIn')}
+                </button>
+                <button onClick={() => onNavigate('sign-up')} className="rounded-xl bg-ink px-4 py-3 text-left text-sm font-bold text-white">
+                  {t('signUp')}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
