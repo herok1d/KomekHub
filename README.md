@@ -22,6 +22,8 @@ The app fetches opportunities and organizations from Supabase. The database sche
 
 `src/data/mockData.ts` is kept only for static UI constants such as categories, filter options, badge options, and initial filters. It is not used as the source for real opportunities or organizations.
 
+For an existing Supabase project created before the automatic auth profile trigger was added, run `supabase/profile_auth_fix.sql` once in the Supabase SQL Editor. It installs the profile RLS policies, creates profiles for new auth users, and backfills missing profiles for existing users.
+
 ## Included
 
 - English and Russian UI with persisted language selection.

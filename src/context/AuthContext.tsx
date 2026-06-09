@@ -2,6 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, supabaseConfigError } from '../services/supabaseClient';
 import { Profile, UserRole } from '../types';
+import { ensureUserProfile, ProfileFallbackData, ProfileRow } from '../services/profileService';
 
 type SignUpInput = {
   fullName: string;
@@ -19,20 +20,6 @@ type AuthContextValue = {
   signUp: (input: SignUpInput) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-};
-
-type ProfileRow = {
-  id: string;
-  user_id: string;
-  full_name: string | null;
-  role: UserRole;
-  city: string | null;
-  avatar_url: string | null;
-  university: string | null;
-  languages: string[] | null;
-  skills: string[] | null;
-  interests: string[] | null;
-  volunteer_hours: number | null;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -63,11 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const client = requireSupabase();
-    const { data, error } = await client.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-    if (error) throw error;
-    setProfile(data ? mapProfile(data as ProfileRow) : null);
+  const ensureAndSetProfile = useCallback(async (user: User, fallbackData?: ProfileFallbackData) => {
+    const row = await ensureUserProfile(user, fallbackData);
+    if (row) setProfile(mapProfile(row));
+    return row;
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -75,8 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       return;
     }
-    await fetchProfile(session.user.id);
-  }, [fetchProfile, session?.user]);
+    await ensureAndSetProfile(session.user);
+  }, [ensureAndSetProfile, session?.user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       if (data.session?.user) {
         try {
-          await fetchProfile(data.session.user.id);
+          await ensureAndSetProfile(data.session.user);
         } finally {
           if (isMounted) setLoading(false);
         }
@@ -115,7 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase?.auth.onAuthStateChange((_event, nextSession) => {
         setSession(nextSession);
         if (nextSession?.user) {
-          fetchProfile(nextSession.user.id).catch(() => setProfile(null));
+          ensureAndSetProfile(nextSession.user).catch((error) => {
+            if (import.meta.env.DEV) console.error('[KomekHub auth] Failed to ensure profile after auth state change', error);
+            setProfile(null);
+          });
         } else {
           setProfile(null);
         }
@@ -126,17 +115,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       subscription?.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [ensureAndSetProfile]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const client = requireSupabase();
-    const { error } = await client.auth.signInWithPassword({ email, password });
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
-  }, []);
+    if (!data.user) throw new Error('Sign in succeeded, but Supabase did not return a user.');
+    await ensureAndSetProfile(data.user);
+  }, [ensureAndSetProfile]);
 
   const signUp = useCallback(async ({ fullName, email, password, role, city }: SignUpInput) => {
     const client = requireSupabase();
-    const { data, error } = await client.auth.signUp({
+    const signUpResult = await client.auth.signUp({
       email,
       password,
       options: {
@@ -147,21 +138,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     });
+    const { data, error } = signUpResult;
+
+    if (import.meta.env.DEV) {
+      console.info('[KomekHub auth] signUp result', {
+        user: data.user,
+        sessionCreated: Boolean(data.session),
+        error,
+      });
+    }
+
     if (error) throw error;
     if (!data.user) throw new Error('Sign up succeeded, but Supabase did not return a user.');
 
-    const { error: profileError } = await client.from('profiles').upsert(
-      {
-        user_id: data.user.id,
-        full_name: fullName,
-        role,
-        city,
-      },
-      { onConflict: 'user_id' },
-    );
-    if (profileError) throw profileError;
-    await fetchProfile(data.user.id);
-  }, [fetchProfile]);
+    const userId = data.user.id;
+    const profilePayload = {
+      user_id: userId,
+      full_name: fullName,
+      role,
+      city,
+    };
+
+    if (import.meta.env.DEV) {
+      console.info('[KomekHub auth] signUp user id', userId);
+      console.info('[KomekHub auth] profile upsert payload', profilePayload);
+    }
+
+    try {
+      await ensureAndSetProfile(data.user, { fullName, role, city });
+      if (import.meta.env.DEV) console.info('[KomekHub auth] profile upsert error', null);
+    } catch (profileError) {
+      if (import.meta.env.DEV) console.error('[KomekHub auth] profile upsert error', profileError);
+      throw profileError;
+    }
+  }, [ensureAndSetProfile]);
 
   const signOut = useCallback(async () => {
     const client = requireSupabase();

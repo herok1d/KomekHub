@@ -20,6 +20,38 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+-- Auth signup can return session = null when email confirmation is enabled.
+-- This security-definer trigger creates the profile inside the database, where
+-- it does not need to weaken profiles RLS for anonymous browser clients.
+create or replace function public.handle_new_user_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (user_id, full_name, role, city)
+  values (
+    new.id,
+    coalesce(nullif(new.raw_user_meta_data ->> 'full_name', ''), split_part(new.email, '@', 1)),
+    case
+      when new.raw_user_meta_data ->> 'role' in ('volunteer', 'organization')
+        then new.raw_user_meta_data ->> 'role'
+      else 'volunteer'
+    end,
+    coalesce(nullif(new.raw_user_meta_data ->> 'city', ''), 'Astana')
+  )
+  on conflict (user_id) do nothing;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_create_profile on auth.users;
+create trigger on_auth_user_created_create_profile
+  after insert on auth.users
+  for each row execute function public.handle_new_user_profile();
+
 -- 2. Organizations are owned by authenticated users.
 create table if not exists public.organizations (
   id uuid primary key default gen_random_uuid(),
@@ -113,14 +145,18 @@ alter table public.saved_opportunities enable row level security;
 alter table public.certificates enable row level security;
 
 -- Profiles: users manage only their own profile.
-create policy "Profiles are readable by owner"
+drop policy if exists "Profiles are readable by owner" on public.profiles;
+drop policy if exists "Users can read own profile" on public.profiles;
+create policy "Users can read own profile"
   on public.profiles for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert own profile" on public.profiles;
 create policy "Users can insert own profile"
   on public.profiles for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = user_id)
