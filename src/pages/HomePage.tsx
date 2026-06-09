@@ -124,7 +124,7 @@ export function HomePage({
                   onApply={() => onApply(item.id)}
                   isSaved={savedIds.includes(item.id)}
                   isApplied={appliedIds.includes(item.id)}
-                  onSave={() => onSave(item.id)}
+                  onToggleSave={() => onSave(item.id)}
                 />
               ))}
             </div>

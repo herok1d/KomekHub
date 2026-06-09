@@ -223,14 +223,17 @@ create policy "Organization owners can delete own opportunities"
   );
 
 -- Applications: volunteers apply/read own; organization owners read and update applications for their opportunities.
+drop policy if exists "Logged in users can apply" on public.applications;
 create policy "Logged in users can apply"
   on public.applications for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can read own applications" on public.applications;
 create policy "Users can read own applications"
   on public.applications for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Organization owners can read applications for own opportunities" on public.applications;
 create policy "Organization owners can read applications for own opportunities"
   on public.applications for select
   using (
@@ -265,14 +268,17 @@ create policy "Organization owners can update applications for own opportunities
   );
 
 -- Saved opportunities: users save/unsave only for themselves.
+drop policy if exists "Users can read own saved opportunities" on public.saved_opportunities;
 create policy "Users can read own saved opportunities"
   on public.saved_opportunities for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can save opportunities for themselves" on public.saved_opportunities;
 create policy "Users can save opportunities for themselves"
   on public.saved_opportunities for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can unsave own opportunities" on public.saved_opportunities;
 create policy "Users can unsave own opportunities"
   on public.saved_opportunities for delete
   using (auth.uid() = user_id);

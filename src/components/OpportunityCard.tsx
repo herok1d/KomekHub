@@ -13,7 +13,7 @@ export function OpportunityCard({
   onApply,
   isSaved,
   isApplied,
-  onSave,
+  onToggleSave,
 }: {
   opportunity: Opportunity;
   language: Language;
@@ -21,7 +21,7 @@ export function OpportunityCard({
   onApply: () => void;
   isSaved: boolean;
   isApplied: boolean;
-  onSave: () => void;
+  onToggleSave: () => void;
 }) {
   const { t, localize } = useI18n(language);
   const badges = sortedUniqueBadges([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])]).slice(0, 3);
@@ -55,7 +55,7 @@ export function OpportunityCard({
           </div>
         </div>
         <button
-          onClick={onSave}
+          onClick={onToggleSave}
           className={classNames(
             'rounded-2xl border p-2.5 transition',
             isSaved ? 'border-leaf bg-mint text-leaf' : 'border-slate-200 text-slate-500 hover:border-ocean hover:text-ocean',

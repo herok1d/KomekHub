@@ -26,6 +26,8 @@ For an existing Supabase project created before the automatic auth profile trigg
 
 `supabase/seed.sql` is repeatable and uses fixed UUIDs with upserts. Once at least one Supabase Auth user exists, run it in the SQL Editor to insert or refresh the 8 demo organizations and 18 demo opportunities without deleting user-created data.
 
+For an existing project, run `supabase/action_policies_fix.sql` once to enable the saved-opportunity and application RLS policies used by the frontend.
+
 ## Included
 
 - English and Russian UI with persisted language selection.

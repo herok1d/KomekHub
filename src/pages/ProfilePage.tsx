@@ -169,7 +169,7 @@ export function ProfilePage({
                 onApply={() => onApply(item.id)}
                 isSaved
                 isApplied={appliedIds.includes(item.id)}
-                onSave={() => onSave(item.id)}
+                onToggleSave={() => onSave(item.id)}
               />
             ))}
           </div>

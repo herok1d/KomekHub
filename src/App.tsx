@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
 import { EmptyState, Toast } from './components/ui';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { createCertificateFromApplication, initialApplications, initialCertificates } from './data/applications';
+import { createCertificateFromApplication, initialCertificates } from './data/applications';
 import { categories, initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
 import { useI18n } from './i18n/useI18n';
@@ -17,6 +17,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 import { getOrganizations } from './services/organizationService';
 import { getOpportunities } from './services/opportunityService';
+import { applyToOpportunity, getUserApplications } from './services/applicationService';
+import { getSavedOpportunityIds, toggleSavedOpportunity } from './services/savedOpportunityService';
 import { Application, ApplicationStatus, Certificate, FilterOptions, Filters, Language, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
 
@@ -40,8 +42,9 @@ function KomekHubApp() {
   const [toast, setToast] = useState('');
   const [certificateToVerify, setCertificateToVerify] = useState('');
   const [language, setLanguage] = useLocalStorageState<Language>('komekhub-language', 'en');
-  const [savedIds, setSavedIds] = useLocalStorageState<string[]>('komekhub-saved-opportunities', []);
-  const [applications, setApplications] = useLocalStorageState<Application[]>('komekhub-applications', initialApplications);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [isLoadingUserActions, setIsLoadingUserActions] = useState(false);
   const [certificates, setCertificates] = useLocalStorageState<Certificate[]>('komekhub-certificates', initialCertificates);
   const { t, localize } = useI18n(language);
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -74,6 +77,36 @@ function KomekHubApp() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function loadUserActions() {
+      if (!user) {
+        setSavedIds([]);
+        setApplications([]);
+        return;
+      }
+
+      setIsLoadingUserActions(true);
+      try {
+        const [savedOpportunityIds, userApplications] = await Promise.all([getSavedOpportunityIds(user.id), getUserApplications(user.id)]);
+        if (!isMounted) return;
+        setSavedIds(savedOpportunityIds);
+        setApplications(userApplications);
+      } catch (error) {
+        if (import.meta.env.DEV) console.error('[KomekHub actions] Failed to load user actions', { userId: user.id, error });
+        if (isMounted) showToast(error instanceof Error ? error.message : t('failedToLoadUserActions'));
+      } finally {
+        if (isMounted) setIsLoadingUserActions(false);
+      }
+    }
+
+    loadUserActions();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     function handlePopState() {
       setPage(pageFromPath(window.location.pathname));
     }
@@ -84,8 +117,7 @@ function KomekHubApp() {
 
   const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0];
   const savedOpportunities = opportunities.filter((item) => savedIds.includes(item.id));
-  const visibleApplications = user ? applications.filter((application) => application.userId === user.id) : [];
-  const appliedIds = visibleApplications.map((application) => application.opportunityId);
+  const appliedIds = applications.map((application) => application.opportunityId);
   const userLabel = profile?.fullName || user?.email || '';
   const filterOptions = useMemo<FilterOptions>(() => {
     const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -182,41 +214,44 @@ function KomekHubApp() {
     navigate('detail');
   }
 
-  function toggleSaved(id: string) {
+  async function toggleSaved(id: string) {
     if (!user) {
-      showToast(t('signInRequired'));
+      showToast(t('signInToSave'));
       navigate('sign-in');
       return;
     }
-    setSavedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+
+    const wasSaved = savedIds.includes(id);
+    try {
+      const isSaved = await toggleSavedOpportunity(user.id, id, wasSaved);
+      setSavedIds((current) => (isSaved ? [...new Set([...current, id])] : current.filter((item) => item !== id)));
+      showToast(t(isSaved ? 'saved' : 'unsaved'));
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('[KomekHub actions] Save failed', { userId: user.id, opportunityId: id, error });
+      showToast(error instanceof Error ? `${t('failedToSaveOpportunity')}: ${error.message}` : t('failedToSaveOpportunity'));
+    }
   }
 
-  function apply(id: string) {
+  async function apply(id: string) {
     if (!user) {
-      showToast(t('signInRequired'));
+      showToast(t('signInToApply'));
       navigate('sign-in');
       return;
     }
 
-    setApplications((current) => {
-      if (current.some((application) => application.opportunityId === id && application.userId === user.id)) return current;
-      const opportunity = opportunities.find((item) => item.id === id);
-      if (!opportunity) return current;
-      return [
-        ...current,
-        {
-          id: `app-${Date.now()}`,
-          userId: user.id,
-          volunteerName: profile?.fullName || user.email || 'KomekHub volunteer',
-          opportunityId: id,
-          organizationName: opportunity.organization,
-          status: 'pending',
-          appliedAt: new Date().toISOString(),
-          volunteerHours: 0,
-        },
-      ];
-    });
-    showToast(t('applicationSent'));
+    if (appliedIds.includes(id)) return;
+
+    try {
+      const application = await applyToOpportunity(user.id, id);
+      if (application) {
+        application.volunteerName = profile?.fullName || user.email || application.volunteerName;
+        setApplications((current) => [application, ...current]);
+      }
+      showToast(t('applicationSent'));
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('[KomekHub actions] Apply failed', { userId: user.id, opportunityId: id, error });
+      showToast(error instanceof Error ? `${t('failedToApply')}: ${error.message}` : t('failedToApply'));
+    }
   }
 
   function updateApplicationStatus(applicationId: string, status: ApplicationStatus, volunteerHours?: number) {
@@ -280,16 +315,16 @@ function KomekHubApp() {
         onSignOut={handleSignOut}
       />
 
-      {(isLoadingData || authLoading) && (
+      {(isLoadingData || authLoading || isLoadingUserActions) && (
         <DataState
           title={language === 'ru' ? 'Загрузка данных Supabase' : 'Loading Supabase data'}
           text={language === 'ru' ? 'Загружаем возможности и организации из базы KomekHub.' : 'Fetching opportunities and organizations from your KomekHub database.'}
         />
       )}
-      {!isLoadingData && !authLoading && dataError && (
+      {!isLoadingData && !authLoading && !isLoadingUserActions && dataError && (
         <DataState title={language === 'ru' ? 'Не удалось загрузить данные Supabase' : 'Supabase data could not be loaded'} text={dataError} />
       )}
-      {!isLoadingData && !authLoading && !dataError && page === 'home' && (
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'home' && (
         <HomePage
           language={language}
           filters={filters}
@@ -305,7 +340,7 @@ function KomekHubApp() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !authLoading && !dataError && page === 'list' && (
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'list' && (
         <ListPage
           language={language}
           filters={filters}
@@ -320,7 +355,7 @@ function KomekHubApp() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !authLoading && !dataError && page === 'detail' && selectedOpportunity && (
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'detail' && selectedOpportunity && (
         <DetailPage
           language={language}
           opportunity={selectedOpportunity}
@@ -333,12 +368,12 @@ function KomekHubApp() {
           onOpenOpportunity={openOpportunity}
         />
       )}
-      {!isLoadingData && !authLoading && !dataError && page === 'profile' && user && (
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'profile' && user && (
         <ProfilePage
           language={language}
           opportunities={opportunities}
           savedOpportunities={savedOpportunities}
-          applications={visibleApplications}
+          applications={applications}
           certificates={certificates}
           appliedIds={appliedIds}
           onOpenOpportunity={openOpportunity}
@@ -347,7 +382,7 @@ function KomekHubApp() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !authLoading && !dataError && page === 'organization' && (
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'organization' && (
         <OrganizationPage
           language={language}
           opportunities={opportunities}
@@ -363,12 +398,12 @@ function KomekHubApp() {
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !authLoading && !dataError && page === 'post' && user && profile?.role === 'organization' && (
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'post' && user && profile?.role === 'organization' && (
         <PostOpportunityPage language={language} onPublished={() => showToast(t('opportunityPublished'))} />
       )}
-      {!isLoadingData && !authLoading && !dataError && page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
-      {!isLoadingData && !authLoading && !dataError && page === 'sign-in' && <SignInPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
-      {!isLoadingData && !authLoading && !dataError && page === 'sign-up' && <SignUpPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-in' && <SignInPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-up' && <SignUpPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
 
       <Footer language={language} onNavigate={navigate} />
       {toast && <Toast message={toast} icon={<ShieldCheck className="text-emerald-300" size={20} />} />}
