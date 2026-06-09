@@ -22,6 +22,15 @@ export type ProfileFallbackData = {
   city?: string;
 };
 
+export type ProfileUpdateInput = {
+  fullName: string;
+  city: string;
+  university: string;
+  languages: string[];
+  skills: string[];
+  interests: string[];
+};
+
 function requireSupabase() {
   if (!supabase) throw new Error(supabaseConfigError);
   return supabase;
@@ -72,5 +81,25 @@ export async function ensureUserProfile(user: User, fallbackData: ProfileFallbac
   }
 
   if (error) throw new Error(`Profile creation failed: ${error.message}`);
+  return data as ProfileRow;
+}
+
+export async function updateUserProfile(userId: string, input: ProfileUpdateInput): Promise<ProfileRow> {
+  const client = requireSupabase();
+  const payload = {
+    full_name: input.fullName.trim(),
+    city: input.city.trim(),
+    university: input.university.trim() || null,
+    languages: input.languages,
+    skills: input.skills,
+    interests: input.interests,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await client.from('profiles').update(payload).eq('user_id', userId).select('*').single();
+  if (error) {
+    if (import.meta.env.DEV) console.error('[KomekHub profile] Update failed', { userId, payload, error });
+    throw new Error(`Profile update failed: ${error.message}`);
+  }
   return data as ProfileRow;
 }

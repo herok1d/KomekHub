@@ -18,7 +18,7 @@ import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 import { getOrganizations } from './services/organizationService';
 import { getOpportunities } from './services/opportunityService';
 import { applyToOpportunity, getUserApplications } from './services/applicationService';
-import { getSavedOpportunityIds, toggleSavedOpportunity } from './services/savedOpportunityService';
+import { getSavedOpportunities, toggleSavedOpportunity } from './services/savedOpportunityService';
 import { Application, ApplicationStatus, Certificate, FilterOptions, Filters, Language, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
 
@@ -43,6 +43,7 @@ function KomekHubApp() {
   const [certificateToVerify, setCertificateToVerify] = useState('');
   const [language, setLanguage] = useLocalStorageState<Language>('komekhub-language', 'en');
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoadingUserActions, setIsLoadingUserActions] = useState(false);
   const [certificates, setCertificates] = useLocalStorageState<Certificate[]>('komekhub-certificates', initialCertificates);
@@ -82,15 +83,17 @@ function KomekHubApp() {
     async function loadUserActions() {
       if (!user) {
         setSavedIds([]);
+        setSavedOpportunities([]);
         setApplications([]);
         return;
       }
 
       setIsLoadingUserActions(true);
       try {
-        const [savedOpportunityIds, userApplications] = await Promise.all([getSavedOpportunityIds(user.id), getUserApplications(user.id)]);
+        const [savedOpportunityRows, userApplications] = await Promise.all([getSavedOpportunities(user.id), getUserApplications(user.id)]);
         if (!isMounted) return;
-        setSavedIds(savedOpportunityIds);
+        setSavedOpportunities(savedOpportunityRows);
+        setSavedIds(savedOpportunityRows.map((opportunity) => opportunity.id));
         setApplications(userApplications);
       } catch (error) {
         if (import.meta.env.DEV) console.error('[KomekHub actions] Failed to load user actions', { userId: user.id, error });
@@ -116,7 +119,6 @@ function KomekHubApp() {
   }, []);
 
   const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0];
-  const savedOpportunities = opportunities.filter((item) => savedIds.includes(item.id));
   const appliedIds = applications.map((application) => application.opportunityId);
   const userLabel = profile?.fullName || user?.email || '';
   const filterOptions = useMemo<FilterOptions>(() => {
@@ -225,6 +227,7 @@ function KomekHubApp() {
     try {
       const isSaved = await toggleSavedOpportunity(user.id, id, wasSaved);
       setSavedIds((current) => (isSaved ? [...new Set([...current, id])] : current.filter((item) => item !== id)));
+      setSavedOpportunities((current) => (isSaved ? [...current, ...opportunities.filter((item) => item.id === id && !current.some((saved) => saved.id === id))] : current.filter((item) => item.id !== id)));
       showToast(t(isSaved ? 'saved' : 'unsaved'));
     } catch (error) {
       if (import.meta.env.DEV) console.error('[KomekHub actions] Save failed', { userId: user.id, opportunityId: id, error });
@@ -380,6 +383,7 @@ function KomekHubApp() {
           onVerifyCertificate={verifyCertificate}
           onApply={apply}
           onSave={toggleSaved}
+          onNotify={showToast}
         />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'organization' && (

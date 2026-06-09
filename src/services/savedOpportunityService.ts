@@ -1,4 +1,6 @@
 import { supabase, supabaseConfigError } from './supabaseClient';
+import { mapOpportunityRowToOpportunity } from './mappers';
+import { Opportunity } from '../types';
 
 function requireSupabase() {
   if (!supabase) throw new Error(supabaseConfigError);
@@ -10,6 +12,38 @@ export async function getSavedOpportunityIds(userId: string): Promise<string[]> 
   const { data, error } = await client.from('saved_opportunities').select('opportunity_id').eq('user_id', userId);
   if (error) throw new Error(`Failed to load saved opportunities: ${error.message}`);
   return (data ?? []).map((row) => row.opportunity_id);
+}
+
+export async function getSavedOpportunities(userId: string): Promise<Opportunity[]> {
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from('saved_opportunities')
+    .select(`
+      created_at,
+      opportunities (
+        *,
+        organizations (
+          id,
+          name,
+          city,
+          logo_url,
+          description,
+          contact_email,
+          website
+        )
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to load saved opportunities: ${error.message}`);
+  return (data ?? [])
+    .map((row) => {
+      const relation = row.opportunities;
+      const opportunity = Array.isArray(relation) ? relation[0] : relation;
+      return opportunity ? mapOpportunityRowToOpportunity(opportunity) : null;
+    })
+    .filter((opportunity): opportunity is Opportunity => Boolean(opportunity));
 }
 
 export async function saveOpportunity(userId: string, opportunityId: string) {
