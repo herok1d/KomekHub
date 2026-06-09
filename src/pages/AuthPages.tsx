@@ -1,6 +1,6 @@
 import { FormEvent, ReactNode, useState } from 'react';
 import { Building2, LockKeyhole, Mail, MapPin, UserRound } from 'lucide-react';
-import { cities } from '../data/mockData';
+import { formCities } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n/useI18n';
 import { Language, Page, UserRole } from '../types';
@@ -100,7 +100,7 @@ export function SignUpPage({ language, onNavigate, onSuccess }: { language: Lang
               onChange={(event) => setCity(event.target.value)}
               className="h-14 w-full appearance-none rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-bold text-ink shadow-sm focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
             >
-              {cities.filter((item) => item !== 'All Kazakhstan').map((item) => (
+              {formCities.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>

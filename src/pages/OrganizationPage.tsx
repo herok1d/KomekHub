@@ -56,10 +56,12 @@ export function OrganizationPage({
           <img src={featured.logo} alt={featured.name} className="h-28 w-28 rounded-3xl object-cover shadow-soft" />
           <h1 className="mt-5 text-3xl font-extrabold">{featured.name}</h1>
           <p className="mt-3 text-sm leading-6 text-slate-600">{localize(featured.description)}</p>
-          <div className="mt-5 flex items-center gap-2 text-sm font-bold text-amber-600">
-            <Star size={18} fill="currentColor" />
-            {featured.rating} · {featured.reviews} {t('reviews')}
-          </div>
+          {featured.reviews > 0 && (
+            <div className="mt-5 flex items-center gap-2 text-sm font-bold text-amber-600">
+              <Star size={18} fill="currentColor" />
+              {featured.rating} - {featured.reviews} {t('reviews')}
+            </div>
+          )}
           <button
             onClick={() => onNavigate('post')}
             className="pressable mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3.5 text-base font-extrabold text-white transition hover:bg-slate-800"

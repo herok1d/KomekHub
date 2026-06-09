@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Send } from 'lucide-react';
-import { categories, cities, formats, schedules } from '../data/mockData';
+import { categories, formCities, formFormats, formSchedules } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Language } from '../types';
@@ -46,10 +46,10 @@ export function PostOpportunityPage({ language, onPublished }: { language: Langu
         <div className="grid gap-5 md:grid-cols-2">
           <Field label={t('title')} value={form.title} placeholder={t('titlePlaceholder')} onChange={(title) => setForm({ ...form, title })} />
           <Field label={t('duration')} value={form.duration} placeholder={t('durationPlaceholder')} onChange={(duration) => setForm({ ...form, duration })} />
-          <SelectCombobox label={t('city')} value={form.city} options={toOptions(cities.filter((city) => city !== 'All Kazakhstan'))} onChange={(city) => setForm({ ...form, city })} />
-          <SelectCombobox label={t('format')} value={form.format} options={toOptions(formats.filter((format) => format !== 'All formats'))} onChange={(format) => setForm({ ...form, format })} />
+          <SelectCombobox label={t('city')} value={form.city} options={toOptions(formCities)} onChange={(city) => setForm({ ...form, city })} />
+          <SelectCombobox label={t('format')} value={form.format} options={toOptions(formFormats)} onChange={(format) => setForm({ ...form, format })} />
           <SelectCombobox label={t('category')} value={form.category} options={toOptions(categories.map((category) => category.name))} onChange={(category) => setForm({ ...form, category })} />
-          <SelectCombobox label={t('schedule')} value={form.schedule} options={toOptions(schedules.filter((schedule) => schedule !== 'Any schedule'))} onChange={(schedule) => setForm({ ...form, schedule })} />
+          <SelectCombobox label={t('schedule')} value={form.schedule} options={toOptions(formSchedules)} onChange={(schedule) => setForm({ ...form, schedule })} />
           <Field label={t('contacts')} value={form.contacts} placeholder={t('contactsPlaceholder')} onChange={(contacts) => setForm({ ...form, contacts })} />
           <TextArea label={t('description')} value={form.description} placeholder={t('descriptionPlaceholder')} onChange={(description) => setForm({ ...form, description })} />
           <TextArea label={t('requirements')} value={form.requirements} placeholder={t('requirementsPlaceholder')} onChange={(requirements) => setForm({ ...form, requirements })} />

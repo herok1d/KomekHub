@@ -1,7 +1,6 @@
 import { ArrowRight } from 'lucide-react';
-import { badgeOptions, categories, cities, formats, languages, schedules } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
-import { Filters, Language } from '../types';
+import { FilterOptions, Filters, Language } from '../types';
 import { SearchInput } from './ui';
 import { SelectCombobox } from './ui/SelectCombobox';
 
@@ -11,6 +10,7 @@ export function SearchPanel({
   labels,
   onSearch,
   language,
+  options,
 }: {
   filters: Filters;
   setFilters: (filters: Filters) => void;
@@ -26,20 +26,20 @@ export function SearchPanel({
     searchButton: string;
   };
   onSearch?: () => void;
+  options: FilterOptions;
 }) {
-  const categoryOptions = ['All categories', ...categories.map((category) => category.name)];
   const toOptions = (values: string[]) => values.map((value) => ({ value, label: labelFor(value, language) }));
 
   return (
     <div className="grid gap-3">
       <SearchInput value={filters.query} placeholder={labels.searchPlaceholder} onChange={(query) => setFilters({ ...filters, query })} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <SelectCombobox label={labels.city} value={filters.city} options={toOptions(cities)} onChange={(city) => setFilters({ ...filters, city })} />
-        <SelectCombobox label={labels.category} value={filters.category} options={toOptions(categoryOptions)} onChange={(category) => setFilters({ ...filters, category })} />
-        <SelectCombobox label={labels.format} value={filters.format} options={toOptions(formats)} onChange={(format) => setFilters({ ...filters, format })} />
-        <SelectCombobox label={labels.schedule} value={filters.schedule} options={toOptions(schedules)} onChange={(schedule) => setFilters({ ...filters, schedule })} />
-        <SelectCombobox label={labels.language} value={filters.language} options={toOptions(languages)} onChange={(nextLanguage) => setFilters({ ...filters, language: nextLanguage })} />
-        <SelectCombobox label={labels.badge} value={filters.badge} options={toOptions(badgeOptions)} onChange={(badge) => setFilters({ ...filters, badge })} />
+        <SelectCombobox label={labels.city} value={filters.city} options={toOptions(options.cities)} onChange={(city) => setFilters({ ...filters, city })} />
+        <SelectCombobox label={labels.category} value={filters.category} options={toOptions(options.categories)} onChange={(category) => setFilters({ ...filters, category })} />
+        <SelectCombobox label={labels.format} value={filters.format} options={toOptions(options.formats)} onChange={(format) => setFilters({ ...filters, format })} />
+        <SelectCombobox label={labels.schedule} value={filters.schedule} options={toOptions(options.schedules)} onChange={(schedule) => setFilters({ ...filters, schedule })} />
+        <SelectCombobox label={labels.language} value={filters.language} options={toOptions(options.languages)} onChange={(nextLanguage) => setFilters({ ...filters, language: nextLanguage })} />
+        <SelectCombobox label={labels.badge} value={filters.badge} options={toOptions(options.badges)} onChange={(badge) => setFilters({ ...filters, badge })} />
       </div>
       {onSearch && (
         <button

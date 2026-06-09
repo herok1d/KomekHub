@@ -1,7 +1,7 @@
 import { SlidersHorizontal } from 'lucide-react';
 import { initialFilters } from '../data/mockData';
 import { useI18n } from '../i18n/useI18n';
-import { Filters, Language, Opportunity } from '../types';
+import { FilterOptions, Filters, Language, Opportunity } from '../types';
 import { SearchPanel } from '../components/SearchPanel';
 import { EmptyState } from '../components/ui';
 import { OpportunityCard } from '../components/OpportunityCard';
@@ -12,6 +12,8 @@ export function ListPage({
   filters,
   setFilters,
   opportunities,
+  totalOpportunityCount,
+  filterOptions,
   onOpenOpportunity,
   onApply,
   savedIds,
@@ -22,6 +24,8 @@ export function ListPage({
   filters: Filters;
   setFilters: (filters: Filters) => void;
   opportunities: Opportunity[];
+  totalOpportunityCount: number;
+  filterOptions: FilterOptions;
   onOpenOpportunity: (id: string) => void;
   onApply: (id: string) => void;
   savedIds: string[];
@@ -47,6 +51,7 @@ export function ListPage({
             filters={filters}
             setFilters={setFilters}
             language={language}
+            options={filterOptions}
             labels={{
               searchPlaceholder: t('searchPlaceholder'),
               city: t('city'),
@@ -87,7 +92,11 @@ export function ListPage({
             </div>
           </div>
           {opportunities.length === 0 ? (
-            <EmptyState title={t('noResultsTitle')} text={t('noResultsText')} action={t('resetFilters')} onAction={() => setFilters(initialFilters)} />
+            totalOpportunityCount === 0 ? (
+              <EmptyState title={t('noOpportunitiesYet')} text={t('noOpportunitiesYetText')} />
+            ) : (
+              <EmptyState title={t('noResultsTitle')} text={t('noResultsText')} action={t('resetFilters')} onAction={() => setFilters(initialFilters)} />
+            )
           ) : (
             <div className="grid gap-4">
               {opportunities.map((item) => (

@@ -24,6 +24,8 @@ The app fetches opportunities and organizations from Supabase. The database sche
 
 For an existing Supabase project created before the automatic auth profile trigger was added, run `supabase/profile_auth_fix.sql` once in the Supabase SQL Editor. It installs the profile RLS policies, creates profiles for new auth users, and backfills missing profiles for existing users.
 
+`supabase/seed.sql` is repeatable and uses fixed UUIDs with upserts. Once at least one Supabase Auth user exists, run it in the SQL Editor to insert or refresh the 8 demo organizations and 18 demo opportunities without deleting user-created data.
+
 ## Included
 
 - English and Russian UI with persisted language selection.

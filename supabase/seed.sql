@@ -7,6 +7,8 @@
 do $$
 declare
   demo_owner uuid;
+  seeded_organizations integer;
+  seeded_opportunities integer;
 begin
   select id into demo_owner from auth.users order by created_at limit 1;
 
@@ -27,12 +29,15 @@ begin
     ('77777777-7777-4777-8777-777777777777', demo_owner, 'AITU Volunteer Club', 'University volunteer club connecting tech students with nonprofit digitalization projects.', 'Astana', null, 'club@aitu.edu.kz', 'https://aitu.edu.kz'),
     ('88888888-8888-4888-8888-888888888888', demo_owner, 'Meirim Animal Care', 'Animal welfare team helping shelters with care shifts and adoption campaigns.', 'Almaty', null, 'help@meirimanimals.kz', 'https://meirimanimals.kz')
   on conflict (id) do update set
+    owner_id = excluded.owner_id,
     name = excluded.name,
     description = excluded.description,
     city = excluded.city,
+    logo_url = excluded.logo_url,
     contact_email = excluded.contact_email,
     website = excluded.website,
     updated_at = now();
+  get diagnostics seeded_organizations = row_count;
 
   -- Demo volunteer opportunities across Kazakhstan.
   insert into public.opportunities (
@@ -59,6 +64,7 @@ begin
     ('aaaaaaaa-0017-4000-8000-000000000017', '55555555-5555-4555-8555-555555555555', 'Family support hotline assistant', 'Help coordinators organize requests and follow-up calls for families.', 'Karaganda', 'Community', 'Hybrid', 'Part-time', array['Kazakh','Russian'], array['Urgent','Certificate'], 'Confidentiality and empathy.', 'Coordinator training and certificate.', 22, true),
     ('aaaaaaaa-0018-4000-8000-000000000018', '88888888-8888-4888-8888-888888888888', 'Adoption day event volunteer', 'Support animal adoption day setup, visitor navigation, and photo stories.', 'Almaty', 'Animals', 'Offline', 'Weekend', array['Russian'], array['Weekend','No experience needed'], 'Comfortable with animals and visitors.', 'Shelter event experience.', 8, false)
   on conflict (id) do update set
+    organization_id = excluded.organization_id,
     title = excluded.title,
     description = excluded.description,
     city = excluded.city,
@@ -72,4 +78,9 @@ begin
     volunteer_hours = excluded.volunteer_hours,
     certificate_available = excluded.certificate_available,
     updated_at = now();
+  get diagnostics seeded_opportunities = row_count;
+
+  raise notice 'KomekHub seed complete: % organizations and % opportunities inserted or updated. Existing user-created rows were not deleted.',
+    seeded_organizations,
+    seeded_opportunities;
 end $$;

@@ -99,10 +99,12 @@ export function DetailPage({
             <p className="mt-3 text-sm leading-6 text-slate-600">
               {organization ? localize(organization.description) : opportunity.organization}
             </p>
-            <div className="mt-4 flex items-center gap-2 text-sm font-bold text-amber-600">
-              <Star size={17} fill="currentColor" />
-              {organization?.rating ?? '4.8'} {t('averageRating')}
-            </div>
+            {organization && organization.reviews > 0 && (
+              <div className="mt-4 flex items-center gap-2 text-sm font-bold text-amber-600">
+                <Star size={17} fill="currentColor" />
+                {organization.rating} {t('averageRating')}
+              </div>
+            )}
           </div>
         </aside>
       </div>

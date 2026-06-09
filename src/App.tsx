@@ -4,7 +4,7 @@ import { Footer, Navbar } from './components/Layout';
 import { EmptyState, Toast } from './components/ui';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { createCertificateFromApplication, initialApplications, initialCertificates } from './data/applications';
-import { initialFilters } from './data/mockData';
+import { categories, initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
 import { useI18n } from './i18n/useI18n';
 import { SignInPage, SignUpPage } from './pages/AuthPages';
@@ -17,7 +17,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 import { getOrganizations } from './services/organizationService';
 import { getOpportunities } from './services/opportunityService';
-import { Application, ApplicationStatus, Certificate, Filters, Language, Opportunity, Organization, Page } from './types';
+import { Application, ApplicationStatus, Certificate, FilterOptions, Filters, Language, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
 
 export default function App() {
@@ -87,6 +87,20 @@ function KomekHubApp() {
   const visibleApplications = user ? applications.filter((application) => application.userId === user.id) : [];
   const appliedIds = visibleApplications.map((application) => application.opportunityId);
   const userLabel = profile?.fullName || user?.email || '';
+  const filterOptions = useMemo<FilterOptions>(() => {
+    const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    return {
+      cities: ['All cities', ...unique(opportunities.map((item) => item.city))],
+      categories: ['All categories', ...categories.map((category) => category.name)],
+      formats: ['All formats', ...unique(opportunities.map((item) => item.format))],
+      schedules: ['Any schedule', ...unique(opportunities.map((item) => item.schedule))],
+      languages: ['Any language', ...unique(opportunities.flatMap((item) => item.languages))],
+      badges: [
+        'Any badge',
+        ...unique(opportunities.flatMap((item) => [...item.badges, ...(item.certificate ? ['Certificate'] : [])])),
+      ],
+    };
+  }, [opportunities]);
 
   const filteredOpportunities = useMemo(() => {
     const normalizedQuery = filters.query.trim().toLowerCase();
@@ -116,7 +130,7 @@ function KomekHubApp() {
 
       return (
         (!normalizedQuery || searchable.includes(normalizedQuery)) &&
-        (filters.city === 'All Kazakhstan' || item.city === filters.city || (filters.city === 'Online' && item.format === 'Online')) &&
+        (filters.city === 'All cities' || item.city === filters.city || (filters.city === 'Online' && item.format === 'Online')) &&
         (filters.category === 'All categories' || item.category === filters.category) &&
         (filters.format === 'All formats' || item.format === filters.format) &&
         (filters.schedule === 'Any schedule' || item.schedule === filters.schedule) &&
@@ -280,6 +294,8 @@ function KomekHubApp() {
           language={language}
           filters={filters}
           setFilters={setFilters}
+          opportunities={opportunities}
+          filterOptions={filterOptions}
           featuredOpportunities={opportunities.slice(0, 3)}
           onNavigate={navigate}
           onOpenOpportunity={openOpportunity}
@@ -295,6 +311,8 @@ function KomekHubApp() {
           filters={filters}
           setFilters={setFilters}
           opportunities={filteredOpportunities}
+          totalOpportunityCount={opportunities.length}
+          filterOptions={filterOptions}
           onOpenOpportunity={openOpportunity}
           onApply={apply}
           savedIds={savedIds}

@@ -25,8 +25,16 @@ export type Filters = {
 
 export type Category = {
   name: string;
-  count: number;
   tone: string;
+};
+
+export type FilterOptions = {
+  cities: string[];
+  categories: string[];
+  formats: string[];
+  schedules: string[];
+  languages: string[];
+  badges: string[];
 };
 
 export type Opportunity = {

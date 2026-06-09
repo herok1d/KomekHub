@@ -37,9 +37,9 @@ export function mapOrganizationRowToOrganization(row: OrganizationRow): Organiza
   return {
     id: row.id,
     name: row.name,
-    logo: row.logo_url || 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=240&q=80',
+    logo: row.logo_url || '/logo-icon.png',
     logoUrl: row.logo_url || undefined,
-    rating: 4.8,
+    rating: 0,
     reviews: 0,
     city: row.city || 'Online',
     contactEmail: row.contact_email || undefined,
@@ -73,8 +73,8 @@ export function mapOpportunityRowToOpportunity(row: OpportunityRow): Opportunity
     volunteerHours: row.volunteer_hours ?? 0,
     certificate,
     postedDaysAgo: row.created_at ? Math.max(0, Math.round((Date.now() - new Date(row.created_at).getTime()) / 86400000)) : 0,
-    distanceKm: row.format === 'Online' ? 0 : 10,
-    popularity: row.certificate_available ? 90 : 70,
+    distanceKm: 0,
+    popularity: 0,
     createdAt: row.created_at || undefined,
   };
 }
