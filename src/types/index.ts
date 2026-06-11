@@ -1,5 +1,5 @@
 export type Language = 'en' | 'ru';
-export type Page = 'home' | 'list' | 'detail' | 'profile' | 'organization' | 'post' | 'verify' | 'sign-in' | 'sign-up';
+export type Page = 'home' | 'list' | 'detail' | 'profile' | 'organization' | 'dashboard' | 'post' | 'verify' | 'sign-in' | 'sign-up';
 export type UserRole = 'volunteer' | 'organization';
 export type Format = 'Offline' | 'Online' | 'Hybrid';
 export type Schedule = 'Few hours' | 'Weekend' | 'Part-time' | 'Project' | 'Flexible';
@@ -66,6 +66,7 @@ export type Opportunity = {
 
 export type Organization = {
   id?: string;
+  ownerId?: string;
   name: string;
   logo: string;
   logoUrl?: string;
@@ -73,7 +74,33 @@ export type Organization = {
   reviews: number;
   city: string;
   contactEmail?: string;
+  phone?: string;
+  website?: string;
   description: LocalizedText;
+};
+
+export type OrganizationInput = {
+  name: string;
+  description: string;
+  city: string;
+  contactEmail: string;
+  phone: string;
+  website: string;
+};
+
+export type OpportunityInput = {
+  title: string;
+  description: string;
+  city: string;
+  category: string;
+  format: string;
+  schedule: string;
+  languages: string[];
+  badges: string[];
+  requirements: string;
+  benefits: string;
+  volunteerHours: number;
+  certificateAvailable: boolean;
 };
 
 export type Profile = {
@@ -100,6 +127,13 @@ export type Application = {
   appliedAt: string;
   completedAt?: string;
   volunteerHours: number;
+};
+
+export type OrganizationApplication = Application & {
+  volunteerCity: string;
+  opportunityTitle: string;
+  message?: string;
+  certificateAvailable: boolean;
 };
 
 export type Certificate = {

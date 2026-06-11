@@ -267,6 +267,20 @@ create policy "Organization owners can update applications for own opportunities
     )
   );
 
+drop policy if exists "Organization owners can read applicant profiles" on public.profiles;
+create policy "Organization owners can read applicant profiles"
+  on public.profiles for select
+  using (
+    exists (
+      select 1
+      from public.applications app
+      join public.opportunities opp on opp.id = app.opportunity_id
+      join public.organizations org on org.id = opp.organization_id
+      where app.user_id = profiles.user_id
+        and org.owner_id = auth.uid()
+    )
+  );
+
 -- Saved opportunities: users save/unsave only for themselves.
 drop policy if exists "Users can read own saved opportunities" on public.saved_opportunities;
 create policy "Users can read own saved opportunities"

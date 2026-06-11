@@ -1,5 +1,6 @@
 import { supabase, supabaseConfigError } from './supabaseClient';
 import { mapOpportunityRowToOpportunity } from './mappers';
+import { OpportunityInput } from '../types';
 
 const selectOpportunity = `
   *,
@@ -31,4 +32,50 @@ export async function getOpportunityById(id: string) {
 export async function getFeaturedOpportunities() {
   const rows = await getOpportunities();
   return rows.slice(0, 3);
+}
+
+function opportunityPayload(organizationId: string, input: OpportunityInput) {
+  return {
+    organization_id: organizationId,
+    title: input.title.trim(),
+    description: input.description.trim(),
+    city: input.city.trim(),
+    category: input.category,
+    format: input.format,
+    schedule: input.schedule,
+    languages: input.languages,
+    badges: input.badges,
+    requirements: input.requirements.trim() || null,
+    benefits: input.benefits.trim() || null,
+    volunteer_hours: input.volunteerHours,
+    certificate_available: input.certificateAvailable,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export async function getOrganizationOpportunities(organizationId: string) {
+  if (!supabase) throw new Error(supabaseConfigError);
+  const { data, error } = await supabase.from('opportunities').select(selectOpportunity).eq('organization_id', organizationId).order('created_at', { ascending: false });
+  if (error) throw new Error(`Failed to load organization opportunities: ${error.message}`);
+  return (data ?? []).map(mapOpportunityRowToOpportunity);
+}
+
+export async function createOpportunity(organizationId: string, input: OpportunityInput) {
+  if (!supabase) throw new Error(supabaseConfigError);
+  const { data, error } = await supabase.from('opportunities').insert(opportunityPayload(organizationId, input)).select(selectOpportunity).single();
+  if (error) throw new Error(`Failed to create opportunity: ${error.message}`);
+  return mapOpportunityRowToOpportunity(data);
+}
+
+export async function updateOpportunity(opportunityId: string, organizationId: string, input: OpportunityInput) {
+  if (!supabase) throw new Error(supabaseConfigError);
+  const { data, error } = await supabase.from('opportunities').update(opportunityPayload(organizationId, input)).eq('id', opportunityId).select(selectOpportunity).single();
+  if (error) throw new Error(`Failed to update opportunity: ${error.message}`);
+  return mapOpportunityRowToOpportunity(data);
+}
+
+export async function deleteOpportunity(opportunityId: string) {
+  if (!supabase) throw new Error(supabaseConfigError);
+  const { error } = await supabase.from('opportunities').delete().eq('id', opportunityId);
+  if (error) throw new Error(`Failed to delete opportunity: ${error.message}`);
 }

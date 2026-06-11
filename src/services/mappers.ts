@@ -2,11 +2,13 @@ import { Opportunity, Organization } from '../types';
 
 type OrganizationRow = {
   id: string;
+  owner_id?: string;
   name: string;
   description: string | null;
   city: string | null;
   logo_url: string | null;
   contact_email: string | null;
+  phone?: string | null;
   website: string | null;
 };
 
@@ -36,6 +38,7 @@ function text(value: string | null | undefined) {
 export function mapOrganizationRowToOrganization(row: OrganizationRow): Organization {
   return {
     id: row.id,
+    ownerId: row.owner_id,
     name: row.name,
     logo: row.logo_url || '/logo-icon.png',
     logoUrl: row.logo_url || undefined,
@@ -43,6 +46,8 @@ export function mapOrganizationRowToOrganization(row: OrganizationRow): Organiza
     reviews: 0,
     city: row.city || 'Online',
     contactEmail: row.contact_email || undefined,
+    phone: row.phone || undefined,
+    website: row.website || undefined,
     description: text(row.description),
   };
 }

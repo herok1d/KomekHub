@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
 import { EmptyState, Toast } from './components/ui';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { createCertificateFromApplication, initialCertificates } from './data/applications';
+import { initialCertificates } from './data/applications';
 import { categories, initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
 import { useI18n } from './i18n/useI18n';
@@ -12,14 +12,14 @@ import { DetailPage } from './pages/DetailPage';
 import { HomePage } from './pages/HomePage';
 import { ListPage } from './pages/ListPage';
 import { OrganizationPage } from './pages/OrganizationPage';
-import { PostOpportunityPage } from './pages/PostOpportunityPage';
+import { OrganizationDashboardPage } from './pages/OrganizationDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 import { getOrganizations } from './services/organizationService';
 import { getOpportunities } from './services/opportunityService';
 import { applyToOpportunity, getUserApplications } from './services/applicationService';
 import { getSavedOpportunities, toggleSavedOpportunity } from './services/savedOpportunityService';
-import { Application, ApplicationStatus, Certificate, FilterOptions, Filters, Language, Opportunity, Organization, Page } from './types';
+import { Application, Certificate, FilterOptions, Filters, Language, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
 
 export default function App() {
@@ -77,6 +77,13 @@ function KomekHubApp() {
     };
   }, []);
 
+  async function refreshMarketplaceData() {
+    const [opportunityRows, organizationRows] = await Promise.all([getOpportunities(), getOrganizations()]);
+    setOpportunities(opportunityRows);
+    setOrganizations(organizationRows);
+    setSelectedId((current) => current || opportunityRows[0]?.id || '');
+  }
+
   useEffect(() => {
     let isMounted = true;
 
@@ -117,6 +124,13 @@ function KomekHubApp() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  useEffect(() => {
+    if (!authLoading && page === 'dashboard' && !user) {
+      setPage('sign-in');
+      window.history.replaceState({}, '', '/sign-in');
+    }
+  }, [authLoading, page, user?.id]);
 
   const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0];
   const appliedIds = applications.map((application) => application.opportunityId);
@@ -189,7 +203,7 @@ function KomekHubApp() {
   }
 
   function navigate(nextPage: Page) {
-    if (nextPage === 'profile' && !user) {
+    if ((nextPage === 'profile' || nextPage === 'dashboard') && !user) {
       showToast(t('signInRequired'));
       setPageAndPath('sign-in');
       return;
@@ -206,6 +220,8 @@ function KomekHubApp() {
         setMobileOpen(false);
         return;
       }
+      setPageAndPath('dashboard');
+      return;
     }
 
     setPageAndPath(nextPage);
@@ -254,32 +270,6 @@ function KomekHubApp() {
     } catch (error) {
       if (import.meta.env.DEV) console.error('[KomekHub actions] Apply failed', { userId: user.id, opportunityId: id, error });
       showToast(error instanceof Error ? `${t('failedToApply')}: ${error.message}` : t('failedToApply'));
-    }
-  }
-
-  function updateApplicationStatus(applicationId: string, status: ApplicationStatus, volunteerHours?: number) {
-    let completedApplication: Application | undefined;
-    setApplications((current) =>
-      current.map((application) => {
-        if (application.id !== applicationId) return application;
-        const next: Application = {
-          ...application,
-          status,
-          volunteerHours: status === 'completed' ? (volunteerHours ?? application.volunteerHours) : application.volunteerHours,
-          completedAt: status === 'completed' ? new Date().toISOString() : application.completedAt,
-        };
-        completedApplication = next;
-        return next;
-      }),
-    );
-
-    if (status === 'completed' && completedApplication) {
-      const certificateApplication = completedApplication;
-      setCertificates((current) => {
-        if (current.some((certificate) => certificate.applicationId === applicationId)) return current;
-        return [...current, createCertificateFromApplication(certificateApplication, current.length + 1, opportunities, organizations)];
-      });
-      showToast(t('certificateIssued'));
     }
   }
 
@@ -393,17 +383,18 @@ function KomekHubApp() {
           organizations={organizations}
           savedIds={savedIds}
           appliedIds={appliedIds}
-          applications={applications}
-          certificates={certificates}
-          onUpdateApplicationStatus={updateApplicationStatus}
           onNavigate={navigate}
           onOpenOpportunity={openOpportunity}
           onApply={apply}
           onSave={toggleSaved}
         />
       )}
-      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'post' && user && profile?.role === 'organization' && (
-        <PostOpportunityPage language={language} onPublished={() => showToast(t('opportunityPublished'))} />
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'dashboard' && user && (
+        <OrganizationDashboardPage
+          language={language}
+          onNotify={showToast}
+          onMarketplaceChanged={refreshMarketplaceData}
+        />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-in' && <SignInPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
@@ -428,8 +419,9 @@ function pageFromPath(pathname: string): Page {
   if (pathname === '/sign-up') return 'sign-up';
   if (pathname === '/opportunities') return 'list';
   if (pathname === '/organizations') return 'organization';
+  if (pathname === '/organization-dashboard') return 'dashboard';
   if (pathname === '/profile') return 'profile';
-  if (pathname === '/post-opportunity') return 'post';
+  if (pathname === '/post-opportunity') return 'dashboard';
   if (pathname === '/verify-certificate') return 'verify';
   return 'home';
 }
@@ -441,7 +433,8 @@ function pathForPage(page: Page) {
     detail: '/opportunities/detail',
     profile: '/profile',
     organization: '/organizations',
-    post: '/post-opportunity',
+    dashboard: '/organization-dashboard',
+    post: '/organization-dashboard',
     verify: '/verify-certificate',
     'sign-in': '/sign-in',
     'sign-up': '/sign-up',

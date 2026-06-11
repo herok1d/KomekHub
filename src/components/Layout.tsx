@@ -84,10 +84,10 @@ export function Navbar({
           )}
           {userRole === 'organization' && (
             <button
-              onClick={() => onNavigate('post')}
+              onClick={() => onNavigate('dashboard')}
               className="pressable rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-slate-800"
             >
-              {t('postOpportunity')}
+              {t('dashboard')}
             </button>
           )}
         </div>
@@ -113,8 +113,8 @@ export function Navbar({
                   {t('navProfile')}
                 </button>
                 {userRole === 'organization' && (
-                  <button onClick={() => onNavigate('post')} className="rounded-xl bg-ink px-4 py-3 text-left text-sm font-bold text-white">
-                    {t('postOpportunity')}
+                  <button onClick={() => onNavigate('dashboard')} className="rounded-xl bg-ink px-4 py-3 text-left text-sm font-bold text-white">
+                    {t('dashboard')}
                   </button>
                 )}
                 <button onClick={onSignOut} className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">

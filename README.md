@@ -28,6 +28,8 @@ For an existing Supabase project created before the automatic auth profile trigg
 
 For an existing project, run `supabase/action_policies_fix.sql` once to enable the saved-opportunity and application RLS policies used by the frontend.
 
+Run `supabase/organization_dashboard_policies.sql` once to enable organization-owned opportunity management, application status updates, and limited applicant profile reads.
+
 ## Included
 
 - English and Russian UI with persisted language selection.
@@ -36,9 +38,9 @@ For an existing project, run `supabase/action_policies_fix.sql` once to enable t
 - Home page with hero search, filters, categories, featured opportunities, how it works, and benefits.
 - Opportunity list page with sidebar filters, sorting, cards, empty state, save, apply state, and localized toast.
 - Opportunity detail page with requirements, responsibilities, benefits, organization info, and similar roles.
-- Volunteer profile page for an AITU student with hours, languages, interests, skills, application history, and saved opportunities.
-- Organization page with logo, description, rating, published opportunities, and post button.
-- Post opportunity form with required-field validation.
+- Supabase-backed volunteer profile with editing, hours, languages, interests, skills, application history, and saved opportunities.
+- Public organization directory plus an organization-only dashboard for profile setup, opportunity management, and application review.
+- Supabase-backed create and edit opportunity forms with required-field validation.
 
 ## Project structure
 
