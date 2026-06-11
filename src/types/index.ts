@@ -134,6 +134,7 @@ export type OrganizationApplication = Application & {
   opportunityTitle: string;
   message?: string;
   certificateAvailable: boolean;
+  certificateNumber?: string;
 };
 
 export type Certificate = {

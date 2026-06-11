@@ -4,22 +4,39 @@ import { useI18n } from '../i18n/useI18n';
 import { Certificate, Language } from '../types';
 import { labelFor } from '../i18n/labels';
 import { formatDate } from '../utils/certificates';
+import { getCertificateByNumber } from '../services/certificateService';
 
-export function VerifyCertificatePage({ language, certificates, initialNumber }: { language: Language; certificates: Certificate[]; initialNumber?: string }) {
+export function VerifyCertificatePage({ language, initialNumber }: { language: Language; initialNumber?: string }) {
   const { t } = useI18n(language);
   const [query, setQuery] = useState(initialNumber ?? '');
   const [submitted, setSubmitted] = useState(initialNumber ?? '');
-  const certificate = certificates.find((item) => item.certificateNumber.toLowerCase() === submitted.trim().toLowerCase());
+  const [certificate, setCertificate] = useState<Certificate | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!initialNumber) return;
     setQuery(initialNumber);
-    setSubmitted(initialNumber);
+    verify(initialNumber);
   }, [initialNumber]);
+
+  async function verify(value: string) {
+    setSubmitted(value);
+    setLoading(true);
+    setError('');
+    try {
+      setCertificate(await getCertificateByNumber(value));
+    } catch (verifyError) {
+      setCertificate(null);
+      setError(verifyError instanceof Error ? verifyError.message : t('certificateVerificationFailed'));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(query);
+    verify(query);
   }
 
   return (
@@ -41,13 +58,17 @@ export function VerifyCertificatePage({ language, certificates, initialNumber }:
               className="h-14 w-full rounded-2xl border border-slate-200 pl-12 pr-4 text-base font-bold focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
             />
           </div>
-          <button className="pressable rounded-2xl bg-ink px-6 py-3 text-base font-extrabold text-white hover:bg-slate-800">{t('verify')}</button>
+          <button disabled={loading} className="rounded-2xl bg-ink px-6 py-3 text-base font-extrabold text-white hover:bg-slate-800 disabled:bg-slate-400">{loading ? t('verifying') : t('verify')}</button>
         </form>
       </section>
 
       {submitted && (
         <section className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
-          {certificate ? (
+          {loading ? (
+            <div className="rounded-3xl bg-slate-50 p-5 text-base font-extrabold text-slate-600">{t('verifying')}</div>
+          ) : error ? (
+            <div className="rounded-3xl bg-rose-50 p-5 text-base font-extrabold text-rose-700">{error}</div>
+          ) : certificate ? (
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-extrabold text-leaf">
                 <Award size={18} />

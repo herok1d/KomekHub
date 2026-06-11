@@ -94,6 +94,7 @@ type OrganizationApplicationRow = {
     title: string;
     certificate_available: boolean;
   } | { title: string; certificate_available: boolean }[] | null;
+  certificates?: { certificate_number: string } | { certificate_number: string }[] | null;
 };
 
 export async function getOrganizationApplications(organizationId: string): Promise<OrganizationApplication[]> {
@@ -109,6 +110,7 @@ export async function getOrganizationApplications(organizationId: string): Promi
       created_at,
       completed_at,
       volunteer_hours,
+      certificates (certificate_number),
       opportunities!inner (
         title,
         certificate_available,
@@ -131,6 +133,8 @@ export async function getOrganizationApplications(organizationId: string): Promi
     const opportunityRelation = row.opportunities;
     const opportunity = Array.isArray(opportunityRelation) ? opportunityRelation[0] : opportunityRelation;
     const volunteer = profileByUser.get(row.user_id);
+    const certificateRelation = row.certificates;
+    const certificate = Array.isArray(certificateRelation) ? certificateRelation[0] : certificateRelation;
     return {
       id: row.id,
       userId: row.user_id,
@@ -145,6 +149,7 @@ export async function getOrganizationApplications(organizationId: string): Promi
       completedAt: row.completed_at || undefined,
       volunteerHours: row.volunteer_hours ?? 0,
       certificateAvailable: Boolean(opportunity?.certificate_available),
+      certificateNumber: certificate?.certificate_number,
     };
   });
 }

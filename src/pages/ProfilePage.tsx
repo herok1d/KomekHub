@@ -19,10 +19,11 @@ import { useAuth } from '../context/AuthContext';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { updateUserProfile } from '../services/profileService';
+import { downloadCertificatePdf } from '../services/certificateService';
 import { Application, Certificate, Language, Opportunity } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
 import { EmptyState, Pill, SectionHeader } from '../components/ui';
-import { downloadCertificatePdf, formatDate } from '../utils/certificates';
+import { formatDate } from '../utils/certificates';
 
 type ProfileFormState = {
   fullName: string;
@@ -196,43 +197,38 @@ export function ProfilePage({
       </section>
 
       <section className="mt-8">
-        <SectionHeader eyebrow={t('completedActivities')} title={t('certificates')} />
+        <SectionHeader eyebrow={t('volunteerPortfolio')} title={t('certificates')} />
         <div className="grid gap-4">
-          {completedApplications.length === 0 && <EmptyState title={t('certificates')} text={t('noCompletedActivitiesYet')} />}
-          {completedApplications.map((application) => {
-            const opportunity = opportunities.find((item) => item.id === application.opportunityId);
-            const certificate = certificates.find((item) => item.applicationId === application.id);
-            if (!opportunity) return null;
-            return (
-              <div key={application.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+          {certificates.length === 0 && <EmptyState title={t('certificates')} text={t('noCertificatesYet')} />}
+          {certificates.map((certificate) => (
+              <div key={certificate.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-extrabold text-leaf">
                       <Award size={18} />
-                      {certificate ? t('certificateIssued') : t('certificateNotReady')}
+                      {t('certificateIssued')}
                     </div>
-                    <h3 className="text-xl font-extrabold">{opportunity.title[language]}</h3>
-                    <p className="mt-1 text-sm font-semibold text-slate-500">{application.organizationName}</p>
+                    <h3 className="text-xl font-extrabold">{certificate.opportunityTitle[language]}</h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">{certificate.organizationName}</p>
                     <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                      <Pill label={`${application.volunteerHours} ${t('volunteerHours')}`} strong />
-                      {certificate && <Pill label={`${t('certificateNumber')}: ${certificate.certificateNumber}`} strong />}
-                      {certificate && <Pill label={`${t('issuedDate')}: ${formatDate(certificate.issuedAt, language)}`} />}
+                      <Pill label={`${certificate.volunteerHours} ${t('volunteerHours')}`} strong />
+                      <Pill label={`${t('certificateNumber')}: ${certificate.certificateNumber}`} strong />
+                      <Pill label={`${t('issuedDate')}: ${formatDate(certificate.issuedAt, language)}`} />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <button disabled={!certificate} onClick={() => certificate && downloadCertificatePdf(certificate, language)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white disabled:bg-slate-300">
+                    <button onClick={() => downloadCertificatePdf(certificate, language)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white">
                       <Download size={17} />
-                      {t('downloadCertificate')}
+                      {t('downloadPdf')}
                     </button>
-                    <button disabled={!certificate} onClick={() => certificate && onVerifyCertificate(certificate.certificateNumber)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean disabled:text-slate-300">
+                    <button onClick={() => onVerifyCertificate(certificate.certificateNumber)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean">
                       <ShieldCheck size={17} />
-                      {t('verifyCertificate')}
+                      {t('verify')}
                     </button>
                   </div>
                 </div>
               </div>
-            );
-          })}
+          ))}
         </div>
       </section>
 

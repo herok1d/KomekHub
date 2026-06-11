@@ -23,6 +23,7 @@ import { useI18n } from '../i18n/useI18n';
 import { createOrganization, getOrganizationByOwnerId, updateOrganization } from '../services/organizationService';
 import { createOpportunity, deleteOpportunity, getOrganizationOpportunities, updateOpportunity } from '../services/opportunityService';
 import { getOrganizationApplications, updateOrganizationApplicationStatus } from '../services/applicationService';
+import { createCertificateForCompletedApplication } from '../services/certificateService';
 import { ApplicationStatus, Language, Opportunity, OpportunityInput, Organization, OrganizationApplication, OrganizationInput } from '../types';
 import { EmptyState } from '../components/ui';
 import { formatDate } from '../utils/certificates';
@@ -131,10 +132,23 @@ export function OrganizationDashboardPage({
     try {
       const previous = applications.find((application) => application.id === applicationId);
       await updateOrganizationApplicationStatus(applicationId, status, volunteerHours);
+      if (status === 'completed' && previous?.certificateAvailable) {
+        await createCertificateForCompletedApplication(applicationId);
+      }
       await loadDashboard();
-      onNotify(t(previous?.status === 'completed' || status === 'completed' ? 'hoursUpdated' : 'applicationStatusUpdated'));
+      onNotify(t(status === 'completed' && previous?.certificateAvailable ? 'certificateIssued' : previous?.status === 'completed' || status === 'completed' ? 'hoursUpdated' : 'applicationStatusUpdated'));
     } catch (statusError) {
       onNotify(statusError instanceof Error ? statusError.message : t('applicationUpdateFailed'));
+    }
+  }
+
+  async function handleIssueCertificate(applicationId: string) {
+    try {
+      await createCertificateForCompletedApplication(applicationId);
+      await loadDashboard();
+      onNotify(t('certificateIssued'));
+    } catch (issueError) {
+      onNotify(issueError instanceof Error ? issueError.message : t('certificateIssueFailed'));
     }
   }
 
@@ -225,7 +239,7 @@ export function OrganizationDashboardPage({
         ) : (
           <div className="grid gap-4">
             {applications.map((application) => (
-              <ApplicationManager key={application.id} application={application} language={language} onUpdate={handleStatus} />
+              <ApplicationManager key={application.id} application={application} language={language} onUpdate={handleStatus} onIssueCertificate={handleIssueCertificate} />
             ))}
           </div>
         )}
@@ -234,7 +248,7 @@ export function OrganizationDashboardPage({
   );
 }
 
-function ApplicationManager({ application, language, onUpdate }: { application: OrganizationApplication; language: Language; onUpdate: (id: string, status: ApplicationStatus, hours?: number) => void }) {
+function ApplicationManager({ application, language, onUpdate, onIssueCertificate }: { application: OrganizationApplication; language: Language; onUpdate: (id: string, status: ApplicationStatus, hours?: number) => void; onIssueCertificate: (id: string) => void }) {
   const { t } = useI18n(language);
   const [hours, setHours] = useState(String(application.volunteerHours || ''));
   return (
@@ -251,8 +265,14 @@ function ApplicationManager({ application, language, onUpdate }: { application: 
             <span className="flex items-center gap-1.5"><CalendarDays size={15} />{formatDate(application.appliedAt, language)}</span>
           </div>
           {application.message && <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">{application.message}</p>}
-          {application.status === 'completed' && application.certificateAvailable && (
-            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-extrabold text-amber-700"><Award size={15} />{t('certificateCanBeIssued')}</p>
+          {application.status === 'completed' && application.certificateAvailable && application.certificateNumber && (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-mint px-3 py-1.5 text-xs font-extrabold text-leaf"><Award size={15} />{t('certificateIssued')}: {application.certificateNumber}</p>
+          )}
+          {application.status === 'completed' && application.certificateAvailable && !application.certificateNumber && (
+            <button onClick={() => onIssueCertificate(application.id)} className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-extrabold text-amber-700"><Award size={15} />{t('issueCertificate')}</button>
+          )}
+          {application.status === 'completed' && !application.certificateAvailable && (
+            <p className="mt-3 text-xs font-bold text-slate-400">{t('certificateNotAvailableForOpportunity')}</p>
           )}
         </div>
         <select value={application.status} onChange={(event) => onUpdate(application.id, event.target.value as ApplicationStatus)} className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-bold focus:border-ocean focus:outline-none">

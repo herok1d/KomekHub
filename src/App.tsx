@@ -3,7 +3,6 @@ import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
 import { EmptyState, Toast } from './components/ui';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { initialCertificates } from './data/applications';
 import { categories, initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
 import { useI18n } from './i18n/useI18n';
@@ -19,6 +18,7 @@ import { getOrganizations } from './services/organizationService';
 import { getOpportunities } from './services/opportunityService';
 import { applyToOpportunity, getUserApplications } from './services/applicationService';
 import { getSavedOpportunities, toggleSavedOpportunity } from './services/savedOpportunityService';
+import { getUserCertificates } from './services/certificateService';
 import { Application, Certificate, FilterOptions, Filters, Language, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
 
@@ -46,7 +46,7 @@ function KomekHubApp() {
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoadingUserActions, setIsLoadingUserActions] = useState(false);
-  const [certificates, setCertificates] = useLocalStorageState<Certificate[]>('komekhub-certificates', initialCertificates);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const { t, localize } = useI18n(language);
   const { user, profile, loading: authLoading, signOut } = useAuth();
 
@@ -92,16 +92,22 @@ function KomekHubApp() {
         setSavedIds([]);
         setSavedOpportunities([]);
         setApplications([]);
+        setCertificates([]);
         return;
       }
 
       setIsLoadingUserActions(true);
       try {
-        const [savedOpportunityRows, userApplications] = await Promise.all([getSavedOpportunities(user.id), getUserApplications(user.id)]);
+        const [savedOpportunityRows, userApplications, userCertificates] = await Promise.all([
+          getSavedOpportunities(user.id),
+          getUserApplications(user.id),
+          getUserCertificates(user.id),
+        ]);
         if (!isMounted) return;
         setSavedOpportunities(savedOpportunityRows);
         setSavedIds(savedOpportunityRows.map((opportunity) => opportunity.id));
         setApplications(userApplications);
+        setCertificates(userCertificates);
       } catch (error) {
         if (import.meta.env.DEV) console.error('[KomekHub actions] Failed to load user actions', { userId: user.id, error });
         if (isMounted) showToast(error instanceof Error ? error.message : t('failedToLoadUserActions'));
@@ -396,7 +402,7 @@ function KomekHubApp() {
           onMarketplaceChanged={refreshMarketplaceData}
         />
       )}
-      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'verify' && <VerifyCertificatePage language={language} certificates={certificates} initialNumber={certificateToVerify} />}
+      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'verify' && <VerifyCertificatePage language={language} initialNumber={certificateToVerify} />}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-in' && <SignInPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-up' && <SignUpPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
 
@@ -422,7 +428,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname === '/organization-dashboard') return 'dashboard';
   if (pathname === '/profile') return 'profile';
   if (pathname === '/post-opportunity') return 'dashboard';
-  if (pathname === '/verify-certificate') return 'verify';
+  if (pathname === '/verify' || pathname === '/verify-certificate') return 'verify';
   return 'home';
 }
 
@@ -435,7 +441,7 @@ function pathForPage(page: Page) {
     organization: '/organizations',
     dashboard: '/organization-dashboard',
     post: '/organization-dashboard',
-    verify: '/verify-certificate',
+    verify: '/verify',
     'sign-in': '/sign-in',
     'sign-up': '/sign-up',
   };
