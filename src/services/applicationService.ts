@@ -151,12 +151,10 @@ export async function getOrganizationApplications(organizationId: string): Promi
 
 export async function updateOrganizationApplicationStatus(applicationId: string, status: ApplicationStatus, volunteerHours?: number) {
   const client = requireSupabase();
-  const payload = {
-    status,
-    completed_at: status === 'completed' ? new Date().toISOString() : null,
-    volunteer_hours: status === 'completed' ? volunteerHours ?? 0 : 0,
-    updated_at: new Date().toISOString(),
-  };
-  const { error } = await client.from('applications').update(payload).eq('id', applicationId);
+  const { error } = await client.rpc('update_application_status_with_hours', {
+    p_application_id: applicationId,
+    p_new_status: status,
+    p_new_hours: status === 'completed' ? volunteerHours ?? 0 : 0,
+  });
   if (error) throw new Error(`Failed to update application: ${error.message}`);
 }

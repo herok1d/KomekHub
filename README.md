@@ -30,6 +30,8 @@ For an existing project, run `supabase/action_policies_fix.sql` once to enable t
 
 Run `supabase/organization_dashboard_policies.sql` once to enable organization-owned opportunity management, application status updates, and limited applicant profile reads.
 
+Run `supabase/volunteer_hours_fix.sql` once to install the transactional application-status RPC that keeps volunteer profile hours synchronized without double-counting.
+
 ## Included
 
 - English and Russian UI with persisted language selection.

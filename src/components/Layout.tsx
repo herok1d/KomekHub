@@ -34,22 +34,25 @@ export function Navbar({
   const isLoggedIn = Boolean(userLabel);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/92 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <button onClick={() => onNavigate('home')} className="flex items-center gap-3">
-          <img src="/logo-icon.png" alt={t('brand')} className="h-10 w-10 rounded-xl object-contain" />
-          <span className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
+    <header className="sticky top-0 z-40 isolate border-b border-slate-200 bg-white/95 text-slate-900 shadow-sm backdrop-blur-xl">
+      <div className="mx-auto flex min-h-[68px] max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <button
+          onClick={() => onNavigate('home')}
+          className="flex min-w-fit flex-shrink-0 items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-ocean/20"
+        >
+          <img src="/logo-icon.png" alt={t('brand')} className="h-10 w-10 flex-shrink-0 object-contain" />
+          <span className="whitespace-nowrap text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
             Komek<span className="text-ocean">Hub</span>
           </span>
         </button>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden min-w-0 items-center gap-0.5 lg:flex xl:gap-1">
           {links.map((link) => (
             <button
               key={link.page}
               onClick={() => onNavigate(link.page)}
               className={classNames(
-                'rounded-full px-4 py-2 text-sm font-semibold transition',
+                'whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors xl:px-4',
                 activePage === link.page ? 'bg-slate-100 text-ink' : 'text-slate-600 hover:bg-slate-50 hover:text-ink',
               )}
             >
@@ -58,18 +61,18 @@ export function Navbar({
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden flex-shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
           <LanguageToggle language={language} onLanguageChange={onLanguageChange} />
           {isLoggedIn ? (
             <>
-              <span className="max-w-[180px] truncate rounded-full bg-slate-100 px-3 py-2 text-sm font-extrabold text-slate-700">{userLabel}</span>
-              <button onClick={() => onNavigate('profile')} className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-ocean hover:text-ocean">
+              <span className="hidden max-w-[140px] truncate rounded-full bg-slate-100 px-3 py-2 text-sm font-extrabold text-slate-700 2xl:block">{userLabel}</span>
+              <button onClick={() => onNavigate('profile')} className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-ocean hover:text-ocean xl:px-4">
                 <UserCircle size={17} />
-                {t('navProfile')}
+                <span className="hidden xl:inline">{t('navProfile')}</span>
               </button>
-              <button onClick={onSignOut} className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-rose-300 hover:text-rose-700">
+              <button onClick={onSignOut} className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-rose-300 hover:text-rose-700 xl:px-4">
                 <LogOut size={17} />
-                {t('signOut')}
+                <span className="hidden xl:inline">{t('signOut')}</span>
               </button>
             </>
           ) : (
@@ -85,20 +88,20 @@ export function Navbar({
           {userRole === 'organization' && (
             <button
               onClick={() => onNavigate('dashboard')}
-              className="pressable rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-slate-800"
+              className="whitespace-nowrap rounded-full bg-ink px-4 py-2.5 text-sm font-bold text-white shadow-soft transition-colors hover:bg-slate-800 xl:px-5"
             >
               {t('dashboard')}
             </button>
           )}
         </div>
 
-        <button className="rounded-xl border border-slate-200 p-2 md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+        <button className="flex-shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-700 lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-slate-100 bg-white px-4 py-4 md:hidden">
+        <div className="border-t border-slate-100 bg-white px-4 py-4 lg:hidden">
           <div className="grid gap-2">
             <LanguageToggle language={language} onLanguageChange={onLanguageChange} />
             {links.map((link) => (
@@ -117,7 +120,8 @@ export function Navbar({
                     {t('dashboard')}
                   </button>
                 )}
-                <button onClick={onSignOut} className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">
+                <button onClick={onSignOut} className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">
+                  <LogOut size={17} />
                   {t('signOut')}
                 </button>
               </>

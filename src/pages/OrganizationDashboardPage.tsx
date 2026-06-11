@@ -129,9 +129,10 @@ export function OrganizationDashboardPage({
       return;
     }
     try {
+      const previous = applications.find((application) => application.id === applicationId);
       await updateOrganizationApplicationStatus(applicationId, status, volunteerHours);
       await loadDashboard();
-      onNotify(t('applicationStatusUpdated'));
+      onNotify(t(previous?.status === 'completed' || status === 'completed' ? 'hoursUpdated' : 'applicationStatusUpdated'));
     } catch (statusError) {
       onNotify(statusError instanceof Error ? statusError.message : t('applicationUpdateFailed'));
     }

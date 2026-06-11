@@ -77,27 +77,9 @@ create policy "Organization owners can read applications for own opportunities"
     )
   );
 
+-- Application status updates intentionally have no direct update policy.
+-- Run volunteer_hours_fix.sql and use its transaction-safe RPC instead.
 drop policy if exists "Organization owners can update applications for own opportunities" on public.applications;
-create policy "Organization owners can update applications for own opportunities"
-  on public.applications for update
-  using (
-    exists (
-      select 1
-      from public.opportunities opp
-      join public.organizations org on org.id = opp.organization_id
-      where opp.id = applications.opportunity_id
-        and org.owner_id = auth.uid()
-    )
-  )
-  with check (
-    exists (
-      select 1
-      from public.opportunities opp
-      join public.organizations org on org.id = opp.organization_id
-      where opp.id = applications.opportunity_id
-        and org.owner_id = auth.uid()
-    )
-  );
 
 drop policy if exists "Organization owners can read applicant profiles" on public.profiles;
 create policy "Organization owners can read applicant profiles"
