@@ -21,10 +21,11 @@ import { categories, formCities, formFormats, formSchedules } from '../data/mock
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { createOrganization, getOrganizationByOwnerId, updateOrganization } from '../services/organizationService';
-import { createOpportunity, deleteOpportunity, getOrganizationOpportunities, updateOpportunity } from '../services/opportunityService';
-import { getOrganizationApplications, updateOrganizationApplicationStatus } from '../services/applicationService';
+import { createOpportunity, deleteOpportunity, getOrganizationOpportunities, updateOpportunity, updateOpportunityStatus } from '../services/opportunityService';
+import { getOrganizationApplications, updateOrganizationApplicationDetails, updateOrganizationApplicationStatus } from '../services/applicationService';
 import { createCertificateForCompletedApplication } from '../services/certificateService';
-import { ApplicationStatus, Language, Opportunity, OpportunityInput, Organization, OrganizationApplication, OrganizationInput } from '../types';
+import { createNotification } from '../services/notificationService';
+import { ApplicationStatus, Language, Opportunity, OpportunityInput, OpportunityStatus, Organization, OrganizationApplication, OrganizationInput } from '../types';
 import { EmptyState } from '../components/ui';
 import { formatDate } from '../utils/certificates';
 
@@ -48,6 +49,7 @@ export function OrganizationDashboardPage({
   const [error, setError] = useState('');
   const [editor, setEditor] = useState<EditorState>(null);
   const [editingOrganization, setEditingOrganization] = useState(false);
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState('');
   const userId = user?.id;
 
   const loadDashboard = useCallback(async () => {
@@ -68,6 +70,7 @@ export function OrganizationDashboardPage({
       ]);
       setOpportunities(ownedOpportunities);
       setApplications(ownedApplications);
+      setSelectedOpportunityId((current) => current || ownedOpportunities[0]?.id || '');
     } catch (dashboardError) {
       setError(dashboardError instanceof Error ? dashboardError.message : language === 'ru' ? 'Не удалось загрузить панель организации' : 'Failed to load organization dashboard');
     } finally {
@@ -80,10 +83,18 @@ export function OrganizationDashboardPage({
   }, [loadDashboard]);
 
   const applicationCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    applications.forEach((application) => counts.set(application.opportunityId, (counts.get(application.opportunityId) ?? 0) + 1));
+    const counts = new Map<string, { total: number; accepted: number; completed: number }>();
+    applications.forEach((application) => {
+      const current = counts.get(application.opportunityId) ?? { total: 0, accepted: 0, completed: 0 };
+      current.total += 1;
+      if (application.status === 'accepted') current.accepted += 1;
+      if (application.status === 'completed') current.completed += 1;
+      counts.set(application.opportunityId, current);
+    });
     return counts;
   }, [applications]);
+  const selectedOpportunity = opportunities.find((opportunity) => opportunity.id === selectedOpportunityId) ?? opportunities[0];
+  const selectedApplications = selectedOpportunity ? applications.filter((application) => application.opportunityId === selectedOpportunity.id) : [];
 
   if (!user) return null;
   if (profile?.role !== 'organization') {
@@ -132,13 +143,53 @@ export function OrganizationDashboardPage({
     try {
       const previous = applications.find((application) => application.id === applicationId);
       await updateOrganizationApplicationStatus(applicationId, status, volunteerHours);
+      let issuedCertificateNumber = '';
       if (status === 'completed' && previous?.certificateAvailable) {
-        await createCertificateForCompletedApplication(applicationId);
+        const certificate = await createCertificateForCompletedApplication(applicationId);
+        issuedCertificateNumber = certificate.certificateNumber;
+      }
+      if (previous) {
+        await createNotification({
+          userId: previous.userId,
+          type: issuedCertificateNumber ? 'certificate_issued' : `application_${status}`,
+          title: issuedCertificateNumber ? t('certificateIssued') : t(status === 'accepted' ? 'acceptedNotificationTitle' : status === 'rejected' ? 'rejectedNotificationTitle' : status === 'completed' ? 'completedNotificationTitle' : 'applicationStatusUpdated'),
+          message: issuedCertificateNumber
+            ? t('certificateIssuedNotificationMessage').replace('[Certificate number]', issuedCertificateNumber)
+            : status === 'accepted'
+              ? t('acceptedNotificationMessage').replace('[Opportunity title]', previous.opportunityTitle)
+              : status === 'rejected'
+                ? t('rejectedNotificationMessage')
+                : status === 'completed'
+                  ? t('completedNotificationMessage').replace('[Hours]', String(volunteerHours ?? previous.volunteerHours ?? 0))
+                  : t('applicationStatusUpdated'),
+          relatedApplicationId: applicationId,
+          relatedOpportunityId: previous.opportunityId,
+        });
       }
       await loadDashboard();
       onNotify(t(status === 'completed' && previous?.certificateAvailable ? 'certificateIssued' : previous?.status === 'completed' || status === 'completed' ? 'hoursUpdated' : 'applicationStatusUpdated'));
     } catch (statusError) {
       onNotify(statusError instanceof Error ? statusError.message : t('applicationUpdateFailed'));
+    }
+  }
+
+  async function handleOpportunityStatus(opportunityId: string, status: OpportunityStatus) {
+    try {
+      await updateOpportunityStatus(opportunityId, status);
+      await Promise.all([loadDashboard(), onMarketplaceChanged()]);
+      onNotify(t('opportunityUpdated'));
+    } catch (statusError) {
+      onNotify(statusError instanceof Error ? statusError.message : t('opportunitySaveFailed'));
+    }
+  }
+
+  async function handleApplicationDetails(applicationId: string, assignedRole?: string, organizationNote?: string) {
+    try {
+      await updateOrganizationApplicationDetails(applicationId, { assignedRole, organizationNote });
+      await loadDashboard();
+      onNotify(t('applicationStatusUpdated'));
+    } catch (detailsError) {
+      onNotify(detailsError instanceof Error ? detailsError.message : t('applicationUpdateFailed'));
     }
   }
 
@@ -220,9 +271,17 @@ export function OrganizationDashboardPage({
                   </div>
                   <h3 className="mt-3 text-xl font-extrabold">{localize(opportunity.title)}</h3>
                   <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{localize(opportunity.description)}</p>
-                  <p className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-500"><Users size={16} />{applicationCounts.get(opportunity.id) ?? 0} {t('applications')}</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold text-slate-500">
+                    <span className="flex items-center gap-2"><Users size={16} />{applicationCounts.get(opportunity.id)?.total ?? 0} {t('applications')}</span>
+                    <span>{applicationCounts.get(opportunity.id)?.accepted ?? 0} {t('acceptedVolunteers')}</span>
+                    <span>{applicationCounts.get(opportunity.id)?.completed ?? 0} {t('completedVolunteers')}</span>
+                  </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setSelectedOpportunityId(opportunity.id)} className="rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white">{t('manageApplications')}</button>
+                  <select value={opportunity.status} onChange={(event) => handleOpportunityStatus(opportunity.id, event.target.value as OpportunityStatus)} className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold">
+                    {(['recruiting', 'closed', 'in_progress', 'completed'] as OpportunityStatus[]).map((status) => <option key={status} value={status}>{t(status)}</option>)}
+                  </select>
                   <button onClick={() => setEditor({ mode: 'edit', opportunity })} className="rounded-2xl border border-slate-200 p-3 text-slate-600 transition-colors hover:border-ocean hover:text-ocean" title={t('editOpportunity')}><Edit3 size={18} /></button>
                   <button onClick={() => handleDelete(opportunity.id)} className="rounded-2xl border border-slate-200 p-3 text-slate-600 transition-colors hover:border-rose-300 hover:text-rose-700" title={t('deleteOpportunity')}><Trash2 size={18} /></button>
                 </div>
@@ -233,13 +292,13 @@ export function OrganizationDashboardPage({
       </section>
 
       <section className="mt-8">
-        <DashboardHeader title={t('applications')} />
-        {applications.length === 0 ? (
+        <DashboardHeader title={selectedOpportunity ? `${t('applications')}: ${localize(selectedOpportunity.title)}` : t('applications')} />
+        {selectedApplications.length === 0 ? (
           <EmptyState title={t('applications')} text={t('noOrganizationApplications')} />
         ) : (
           <div className="grid gap-4">
-            {applications.map((application) => (
-              <ApplicationManager key={application.id} application={application} language={language} onUpdate={handleStatus} onIssueCertificate={handleIssueCertificate} />
+            {selectedApplications.map((application) => (
+              <ApplicationManager key={application.id} application={application} language={language} onUpdate={handleStatus} onIssueCertificate={handleIssueCertificate} onSaveDetails={handleApplicationDetails} />
             ))}
           </div>
         )}
@@ -248,12 +307,26 @@ export function OrganizationDashboardPage({
   );
 }
 
-function ApplicationManager({ application, language, onUpdate, onIssueCertificate }: { application: OrganizationApplication; language: Language; onUpdate: (id: string, status: ApplicationStatus, hours?: number) => void; onIssueCertificate: (id: string) => void }) {
+function ApplicationManager({
+  application,
+  language,
+  onUpdate,
+  onIssueCertificate,
+  onSaveDetails,
+}: {
+  application: OrganizationApplication;
+  language: Language;
+  onUpdate: (id: string, status: ApplicationStatus, hours?: number) => void;
+  onIssueCertificate: (id: string) => void;
+  onSaveDetails: (id: string, assignedRole?: string, organizationNote?: string) => void;
+}) {
   const { t } = useI18n(language);
   const [hours, setHours] = useState(String(application.volunteerHours || ''));
+  const [assignedRole, setAssignedRole] = useState(application.assignedRole ?? '');
+  const [organizationNote, setOrganizationNote] = useState(application.organizationNote ?? '');
   return (
     <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
-      <div className="grid gap-5 xl:grid-cols-[1fr_180px_360px] xl:items-center">
+      <div className="grid gap-5 xl:grid-cols-[1fr_190px_360px] xl:items-start">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-extrabold">{application.volunteerName}</h3>
@@ -263,8 +336,14 @@ function ApplicationManager({ application, language, onUpdate, onIssueCertificat
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-slate-500">
             {application.volunteerCity && <span className="flex items-center gap-1.5"><MapPin size={15} />{application.volunteerCity}</span>}
             <span className="flex items-center gap-1.5"><CalendarDays size={15} />{formatDate(application.appliedAt, language)}</span>
+            <span>{t('volunteerResponse')}: {t(application.volunteerResponse)}</span>
           </div>
           {application.message && <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">{application.message}</p>}
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <Input label={t('assignedRole')} value={assignedRole} onChange={setAssignedRole} placeholder="Event registration assistant" />
+            <Input label={t('organizationNote')} value={organizationNote} onChange={setOrganizationNote} placeholder={t('organizationNote')} />
+            <button onClick={() => onSaveDetails(application.id, assignedRole, organizationNote)} className="w-fit rounded-2xl border border-slate-200 px-4 py-2 text-sm font-extrabold text-slate-700 hover:border-ocean hover:text-ocean">{t('saveChanges')}</button>
+          </div>
           {application.status === 'completed' && application.certificateAvailable && application.certificateNumber && (
             <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-mint px-3 py-1.5 text-xs font-extrabold text-leaf"><Award size={15} />{t('certificateIssued')}: {application.certificateNumber}</p>
           )}
@@ -319,6 +398,7 @@ function OpportunityEditor({ language, organizationId, opportunity, onCancel, on
           <Select label={t('category')} value={form.category} values={categories.map((item) => item.name)} language={language} onChange={(value) => update('category', value)} />
           <Select label={t('format')} value={form.format} values={formFormats} language={language} onChange={(value) => update('format', value)} />
           <Select label={t('schedule')} value={form.schedule} values={formSchedules} language={language} onChange={(value) => update('schedule', value)} />
+          <Select label={t('status')} value={form.status} values={['recruiting', 'closed', 'in_progress', 'completed']} language={language} onChange={(value) => update('status', value as OpportunityStatus)} />
           <Input label={t('volunteerHours')} value={String(form.volunteerHours)} onChange={(value) => update('volunteerHours', Number(value))} type="number" required />
           <Input label={t('languages')} value={form.languages.join(', ')} onChange={(value) => update('languages', parseList(value))} placeholder={t('commaSeparatedPlaceholder')} />
           <Input label={t('badge')} value={form.badges.join(', ')} onChange={(value) => update('badges', parseList(value))} placeholder={t('commaSeparatedPlaceholder')} />
@@ -433,6 +513,7 @@ function opportunityToInput(opportunity: Opportunity | undefined, localize: (val
     benefits: opportunity?.benefits[0] ? localize(opportunity.benefits[0]) : '',
     volunteerHours: opportunity?.volunteerHours ?? 0,
     certificateAvailable: opportunity?.certificate ?? false,
+    status: opportunity?.status ?? 'recruiting',
   };
 }
 

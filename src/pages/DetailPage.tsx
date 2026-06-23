@@ -32,6 +32,8 @@ export function DetailPage({
   const related = opportunities.filter((item) => item.category === opportunity.category && item.id !== opportunity.id).slice(0, 2);
   const badges = sortedUniqueBadges([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])]).slice(0, 3);
   const tags = detailTags(opportunity.tags, badges);
+  const canApply = opportunity.status === 'recruiting';
+  const applyDisabled = appliedIds.includes(opportunity.id) || !canApply;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -41,6 +43,9 @@ export function DetailPage({
             {badges.map((badge) => (
               <Badge key={badge} label={badge} language={language} />
             ))}
+            <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${canApply ? 'bg-mint text-leaf' : 'bg-slate-100 text-slate-600'}`}>
+              {t(opportunity.status)}
+            </span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">{localize(opportunity.title)}</h1>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
@@ -81,10 +86,10 @@ export function DetailPage({
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
             <button
               onClick={() => onApply(opportunity.id)}
-              disabled={appliedIds.includes(opportunity.id)}
+              disabled={applyDisabled}
               className="pressable flex w-full items-center justify-center rounded-2xl bg-ocean px-5 py-4 text-base font-extrabold text-white shadow-soft transition hover:bg-blue-600 disabled:bg-slate-400"
             >
-              {appliedIds.includes(opportunity.id) ? t('applied') : t('applyNow')}
+              {appliedIds.includes(opportunity.id) ? t('applied') : canApply ? t('applyNow') : t(opportunity.status)}
             </button>
             <button
               onClick={() => onSave(opportunity.id)}

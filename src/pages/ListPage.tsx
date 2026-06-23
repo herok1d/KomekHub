@@ -1,4 +1,5 @@
 import { SlidersHorizontal } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { initialFilters } from '../data/mockData';
 import { useI18n } from '../i18n/useI18n';
 import { FilterOptions, Filters, Language, Opportunity } from '../types';
@@ -33,6 +34,11 @@ export function ListPage({
   onSave: (id: string) => void;
 }) {
   const { t } = useI18n(language);
+  const [draftFilters, setDraftFilters] = useState(filters);
+
+  useEffect(() => {
+    setDraftFilters(filters);
+  }, [filters]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -48,8 +54,8 @@ export function ListPage({
         <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
           <div className="mb-4 text-lg font-extrabold">{t('filters')}</div>
           <SearchPanel
-            filters={filters}
-            setFilters={setFilters}
+            filters={draftFilters}
+            setFilters={setDraftFilters}
             language={language}
             options={filterOptions}
             labels={{
@@ -60,11 +66,15 @@ export function ListPage({
               schedule: t('schedule'),
               language: t('language'),
               badge: t('badge'),
-              searchButton: t('searchButton'),
+              searchButton: t('applyFilters'),
             }}
+            onSearch={() => setFilters(draftFilters)}
           />
           <button
-            onClick={() => setFilters(initialFilters)}
+            onClick={() => {
+              setDraftFilters(initialFilters);
+              setFilters(initialFilters);
+            }}
             className="pressable mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-base font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
           >
             {t('resetFilters')}
@@ -73,7 +83,7 @@ export function ListPage({
 
         <section className="min-w-0">
           <div className="relative z-20 mb-4 flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft sm:flex-row sm:items-end sm:justify-between">
-            <div className="text-base font-extrabold text-slate-700">
+            <div className="self-center text-base font-extrabold text-slate-700">
               {opportunities.length} {t('found')}
             </div>
             <div className="w-full sm:w-[280px]">

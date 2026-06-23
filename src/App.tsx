@@ -16,11 +16,12 @@ import { ProfilePage } from './pages/ProfilePage';
 import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 import { getOrganizations } from './services/organizationService';
 import { getOpportunities } from './services/opportunityService';
-import { applyToOpportunity, getUserApplications } from './services/applicationService';
+import { applyToOpportunity, getUserApplications, updateVolunteerResponse } from './services/applicationService';
 import { getSavedOpportunities, toggleSavedOpportunity } from './services/savedOpportunityService';
 import { getUserCertificates } from './services/certificateService';
-import { Application, Certificate, FilterOptions, Filters, Language, Opportunity, Organization, Page } from './types';
+import { Application, Certificate, FilterOptions, Filters, Language, Notification, Opportunity, Organization, Page } from './types';
 import { useLocalStorageState } from './utils/storage';
+import { createNotification, getUserNotifications, markAllNotificationsRead } from './services/notificationService';
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ function KomekHubApp() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoadingUserActions, setIsLoadingUserActions] = useState(false);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const { t, localize } = useI18n(language);
   const { user, profile, loading: authLoading, signOut } = useAuth();
 
@@ -93,21 +95,24 @@ function KomekHubApp() {
         setSavedOpportunities([]);
         setApplications([]);
         setCertificates([]);
+        setNotifications([]);
         return;
       }
 
       setIsLoadingUserActions(true);
       try {
-        const [savedOpportunityRows, userApplications, userCertificates] = await Promise.all([
+        const [savedOpportunityRows, userApplications, userCertificates, userNotifications] = await Promise.all([
           getSavedOpportunities(user.id),
           getUserApplications(user.id),
           getUserCertificates(user.id),
+          getUserNotifications(user.id),
         ]);
         if (!isMounted) return;
         setSavedOpportunities(savedOpportunityRows);
         setSavedIds(savedOpportunityRows.map((opportunity) => opportunity.id));
         setApplications(userApplications);
         setCertificates(userCertificates);
+        setNotifications(userNotifications);
       } catch (error) {
         if (import.meta.env.DEV) console.error('[KomekHub actions] Failed to load user actions', { userId: user.id, error });
         if (isMounted) showToast(error instanceof Error ? error.message : t('failedToLoadUserActions'));
@@ -154,7 +159,7 @@ function KomekHubApp() {
       languages: ['Any language', ...unique(opportunities.flatMap((item) => item.languages))],
       badges: [
         'Any badge',
-        ...unique(opportunities.flatMap((item) => [...item.badges, ...(item.certificate ? ['Certificate'] : [])])),
+        ...unique(opportunities.flatMap((item) => [...item.badges, ...(item.certificate ? ['Certificate'] : [])]).filter((badge) => !badge.toLowerCase().includes('language'))),
       ],
     };
   }, [opportunities]);
@@ -191,8 +196,8 @@ function KomekHubApp() {
         (filters.category === 'All categories' || item.category === filters.category) &&
         (filters.format === 'All formats' || item.format === filters.format) &&
         (filters.schedule === 'Any schedule' || item.schedule === filters.schedule) &&
-        (filters.language === 'Any language' || item.languages.includes(filters.language as never)) &&
-        (filters.badge === 'Any badge' || item.badges.includes(filters.badge) || (filters.badge === 'Certificate' && item.certificate))
+        (filters.languages.length === 0 || filters.languages.every((languageFilter) => item.languages.includes(languageFilter as never))) &&
+        (filters.badges.length === 0 || filters.badges.every((badgeFilter) => item.badges.includes(badgeFilter) || (badgeFilter === 'Certificate' && item.certificate)))
       );
     });
 
@@ -268,6 +273,11 @@ function KomekHubApp() {
     }
 
     if (appliedIds.includes(id)) return;
+    const opportunity = opportunities.find((item) => item.id === id);
+    if (opportunity && opportunity.status !== 'recruiting') {
+      showToast(t(opportunity.status));
+      return;
+    }
 
     try {
       const application = await applyToOpportunity(user.id, id);
@@ -280,6 +290,31 @@ function KomekHubApp() {
       if (import.meta.env.DEV) console.error('[KomekHub actions] Apply failed', { userId: user.id, opportunityId: id, error });
       showToast(error instanceof Error ? `${t('failedToApply')}: ${error.message}` : t('failedToApply'));
     }
+  }
+
+  async function markNotificationsRead() {
+    if (!user) return;
+    await markAllNotificationsRead(user.id);
+    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+  }
+
+  async function respondToApplication(applicationId: string, response: 'accepted' | 'declined') {
+    await updateVolunteerResponse(applicationId, response);
+    const application = applications.find((item) => item.id === applicationId);
+    const opportunity = opportunities.find((item) => item.id === application?.opportunityId);
+    const organizationOwner = organizations.find((item) => item.id === opportunity?.organizationId)?.ownerId;
+    if (organizationOwner && application && opportunity) {
+      await createNotification({
+        userId: organizationOwner,
+        type: `volunteer_${response}`,
+        title: t(response === 'accepted' ? 'participationConfirmed' : 'participationDeclined'),
+        message: `${application.volunteerName} ${response === 'accepted' ? t('participationConfirmed') : t('participationDeclined')}: ${localize(opportunity.title)}`,
+        relatedApplicationId: application.id,
+        relatedOpportunityId: opportunity.id,
+      });
+    }
+    setApplications((current) => current.map((application) => (application.id === applicationId ? { ...application, volunteerResponse: response } : application)));
+    showToast(t(response === 'accepted' ? 'participationConfirmed' : 'participationDeclined'));
   }
 
   function showToast(message: string) {
@@ -315,6 +350,8 @@ function KomekHubApp() {
         userLabel={userLabel}
         userRole={profile?.role}
         onSignOut={handleSignOut}
+        notifications={notifications}
+        onMarkNotificationsRead={markNotificationsRead}
       />
 
       {(isLoadingData || authLoading || isLoadingUserActions) && (
@@ -383,6 +420,7 @@ function KomekHubApp() {
           onApply={apply}
           onSave={toggleSaved}
           onNotify={showToast}
+          onVolunteerResponse={respondToApplication}
         />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'organization' && (

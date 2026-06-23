@@ -1,4 +1,4 @@
-import { ArrowRight, Bookmark, BookmarkCheck, Building2, CalendarDays, Clock, Languages, MapPin, Send } from 'lucide-react';
+import { ArrowRight, Bookmark, BookmarkCheck, Building2, CalendarDays, Clock, Languages, MapPin, Send, Users } from 'lucide-react';
 import { labelFor } from '../i18n/labels';
 import { Language, Opportunity } from '../types';
 import { useI18n } from '../i18n/useI18n';
@@ -26,6 +26,8 @@ export function OpportunityCard({
   const { t, localize } = useI18n(language);
   const badges = sortedUniqueBadges([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])]).slice(0, 3);
   const tags = detailTags([opportunity.format, opportunity.schedule, ...opportunity.tags], badges).slice(0, 5);
+  const canApply = opportunity.status === 'recruiting';
+  const applyDisabled = isApplied || !canApply;
 
   return (
     <article className="group flex min-h-[360px] flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition-shadow duration-200 hover:border-ocean/30 hover:shadow-lift sm:p-6">
@@ -35,6 +37,9 @@ export function OpportunityCard({
             {badges.map((badge) => (
               <Badge key={badge} label={badge} language={language} />
             ))}
+            <span className={classNames('rounded-full px-3 py-1 text-xs font-extrabold', canApply ? 'bg-mint text-leaf' : 'bg-slate-100 text-slate-600')}>
+              {t(opportunity.status)}
+            </span>
           </div>
           <button onClick={onOpen} className="text-left text-xl font-extrabold tracking-tight transition group-hover:text-ocean">
             {localize(opportunity.title)}
@@ -76,6 +81,10 @@ export function OpportunityCard({
           <CalendarDays size={17} />
           {opportunity.volunteerHours} {t('volunteerHours')}
         </span>
+        <span className="flex items-center gap-2">
+          <Users size={17} />
+          {opportunity.applicationCount} {t('appliedCount')}
+        </span>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -87,14 +96,14 @@ export function OpportunityCard({
       <div className="mt-auto flex flex-col gap-3 pt-5 sm:flex-row">
         <button
           onClick={onApply}
-          disabled={isApplied}
+          disabled={applyDisabled}
           className={classNames(
             'pressable flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-extrabold text-white transition',
-            isApplied ? 'bg-slate-400' : 'bg-leaf hover:bg-emerald-700',
+            applyDisabled ? 'bg-slate-400' : 'bg-leaf hover:bg-emerald-700',
           )}
         >
           <Send size={17} />
-          {isApplied ? t('applied') : t('apply')}
+          {isApplied ? t('applied') : canApply ? t('apply') : t(opportunity.status)}
         </button>
         <button onClick={onOpen} className="pressable flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-base font-extrabold text-ink transition hover:border-ocean hover:text-ocean">
           {t('viewDetails')}

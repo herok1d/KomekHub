@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Award, ChevronDown, Globe2, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserCircle, X } from 'lucide-react';
-import { Language, Page, UserRole } from '../types';
+import { Award, Bell, ChevronDown, Globe2, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserCircle, X } from 'lucide-react';
+import { Language, Notification, Page, UserRole } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { classNames } from '../utils/classNames';
 
@@ -15,6 +15,8 @@ export function Navbar({
   userLabel,
   userRole,
   onSignOut,
+  notifications = [],
+  onMarkNotificationsRead,
 }: {
   activePage: Page;
   language: Language;
@@ -25,6 +27,8 @@ export function Navbar({
   userLabel?: string;
   userRole?: UserRole;
   onSignOut: () => void;
+  notifications?: Notification[];
+  onMarkNotificationsRead?: () => void;
 }) {
   const { t } = useI18n(language);
   const links: Array<{ page: Page; label: string }> = [
@@ -65,7 +69,10 @@ export function Navbar({
         <div className="hidden flex-shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
           <LanguageToggle language={language} onLanguageChange={onLanguageChange} />
           {isLoggedIn ? (
-            <AccountDropdown userLabel={userLabel} userRole={userRole} onNavigate={onNavigate} onSignOut={onSignOut} language={language} />
+            <>
+              <NotificationBell notifications={notifications} language={language} onMarkRead={onMarkNotificationsRead} />
+              <AccountDropdown userLabel={userLabel} userRole={userRole} onNavigate={onNavigate} onSignOut={onSignOut} language={language} />
+            </>
           ) : (
             <>
               <button onClick={() => onNavigate('sign-in')} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-ocean hover:text-ocean">
@@ -95,6 +102,19 @@ export function Navbar({
             {isLoggedIn ? (
               <>
                 <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-700">{userLabel}</div>
+                {notifications.length > 0 && (
+                  <div className="rounded-xl bg-slate-50 px-4 py-3">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-extrabold text-slate-700">
+                      {t('notifications')}
+                      <span className="rounded-full bg-ocean px-2 py-0.5 text-xs text-white">{notifications.filter((item) => !item.read).length}</span>
+                    </div>
+                    <div className="grid gap-2">
+                      {notifications.slice(0, 3).map((notification) => (
+                        <p key={notification.id} className="text-xs font-semibold leading-5 text-slate-500">{notification.message}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {userRole === 'organization' && (
                   <>
                     <MobileAccountLink label={t('dashboard')} icon={<LayoutDashboard size={17} />} onClick={() => onNavigate('dashboard')} />
@@ -127,6 +147,55 @@ export function Navbar({
         </div>
       )}
     </header>
+  );
+}
+
+function NotificationBell({ notifications, language, onMarkRead }: { notifications: Notification[]; language: Language; onMarkRead?: () => void }) {
+  const { t } = useI18n(language);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const unread = notifications.filter((notification) => !notification.read).length;
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={async () => {
+          setOpen((current) => !current);
+          if (!open && unread > 0) await onMarkRead?.();
+        }}
+        className="relative rounded-full border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
+        aria-label={t('notifications')}
+      >
+        <Bell size={18} />
+        {unread > 0 && <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-extrabold text-white">{unread}</span>}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          <div className="border-b border-slate-100 px-3 py-2 text-sm font-extrabold text-slate-800">{t('notifications')}</div>
+          <div className="max-h-96 overflow-auto py-1">
+            {notifications.length === 0 ? (
+              <p className="px-3 py-4 text-sm font-semibold text-slate-500">{t('noNotifications')}</p>
+            ) : (
+              notifications.slice(0, 8).map((notification) => (
+                <div key={notification.id} className="rounded-xl px-3 py-2.5 hover:bg-slate-50">
+                  <p className="text-sm font-extrabold text-slate-800">{notification.title}</p>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{notification.message}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

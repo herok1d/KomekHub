@@ -27,7 +27,9 @@ type OpportunityRow = {
   benefits: string | null;
   volunteer_hours: number | null;
   certificate_available: boolean | null;
+  status?: string | null;
   created_at: string | null;
+  applications?: { count: number }[] | null;
   organizations?: OrganizationRow | OrganizationRow[] | null;
 };
 
@@ -54,7 +56,7 @@ export function mapOrganizationRowToOrganization(row: OrganizationRow): Organiza
 
 export function mapOpportunityRowToOpportunity(row: OpportunityRow): Opportunity {
   const organization = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations;
-  const badges = row.badges ?? [];
+  const badges = (row.badges ?? []).filter((badge) => !badge.toLowerCase().includes('language'));
   const certificate = Boolean(row.certificate_available);
   return {
     id: row.id,
@@ -72,11 +74,13 @@ export function mapOpportunityRowToOpportunity(row: OpportunityRow): Opportunity
     requirements: row.requirements ? [text(row.requirements)] : [],
     responsibilities: [],
     benefits: row.benefits ? [text(row.benefits)] : [],
-    tags: [...new Set([...(row.languages ?? []).map((item) => `${item} language`), ...badges])],
+    tags: [...new Set(badges)],
     badges: certificate ? [...new Set([...badges, 'Certificate'])] : badges,
     languages: (row.languages ?? []) as Opportunity['languages'],
     volunteerHours: row.volunteer_hours ?? 0,
     certificate,
+    status: (row.status || 'recruiting') as Opportunity['status'],
+    applicationCount: row.applications?.[0]?.count ?? 0,
     postedDaysAgo: row.created_at ? Math.max(0, Math.round((Date.now() - new Date(row.created_at).getTime()) / 86400000)) : 0,
     distanceKm: 0,
     popularity: 0,

@@ -46,6 +46,7 @@ export function ProfilePage({
   onApply,
   onSave,
   onNotify,
+  onVolunteerResponse,
 }: {
   language: Language;
   opportunities: Opportunity[];
@@ -58,8 +59,9 @@ export function ProfilePage({
   onApply: (id: string) => void;
   onSave: (id: string) => void;
   onNotify: (message: string) => void;
+  onVolunteerResponse: (applicationId: string, response: 'accepted' | 'declined') => Promise<void>;
 }) {
-  const { t } = useI18n(language);
+  const { t, localize } = useI18n(language);
   const { user, profile, refreshProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -189,6 +191,18 @@ export function ProfilePage({
                     </span>
                   </span>
                   <StatusPill status={application.status} label={t(application.status)} />
+                  {application.status === 'accepted' && application.volunteerResponse === 'pending' && (
+                    <div className="mt-3 rounded-2xl bg-skysoft p-4">
+                      <p className="text-sm font-bold text-ocean">{t('acceptedConfirmPrompt').replace('[Opportunity title]', opportunity ? localize(opportunity.title) : '')}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button onClick={(event) => { event.stopPropagation(); onVolunteerResponse(application.id, 'accepted'); }} className="rounded-xl bg-leaf px-4 py-2 text-sm font-extrabold text-white">{t('confirmParticipation')}</button>
+                        <button onClick={(event) => { event.stopPropagation(); onVolunteerResponse(application.id, 'declined'); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700">{t('declineParticipation')}</button>
+                      </div>
+                    </div>
+                  )}
+                  {application.status === 'accepted' && application.volunteerResponse !== 'pending' && (
+                    <p className="mt-3 text-sm font-bold text-slate-500">{t('volunteerResponse')}: {t(application.volunteerResponse)}</p>
+                  )}
                 </button>
               );
             })}

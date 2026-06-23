@@ -37,6 +37,10 @@ const labels: Record<string, Record<Language, string>> = {
   'Russian language': { en: 'Russian language', ru: 'Русский язык' },
   'English language': { en: 'English language', ru: 'Английский язык' },
   'Flexible schedule': { en: 'Flexible schedule', ru: 'Гибкий график' },
+  recruiting: { en: 'Recruiting', ru: 'Идёт набор' },
+  closed: { en: 'Closed', ru: 'Набор закрыт' },
+  in_progress: { en: 'In progress', ru: 'Проходит сейчас' },
+  completed: { en: 'Completed', ru: 'Завершено' },
 };
 
 export function labelFor(value: string, language: Language) {

@@ -1,4 +1,4 @@
-import { Application, ApplicationStatus, OrganizationApplication } from '../types';
+import { Application, ApplicationStatus, OrganizationApplication, VolunteerResponseStatus } from '../types';
 import { supabase, supabaseConfigError } from './supabaseClient';
 
 type ApplicationRow = {
@@ -9,7 +9,11 @@ type ApplicationRow = {
   created_at: string;
   completed_at: string | null;
   volunteer_hours: number | null;
+  volunteer_response?: VolunteerResponseStatus | null;
+  assigned_role?: string | null;
+  organization_note?: string | null;
   opportunities?: {
+    title?: string;
     organizations?: { name: string } | { name: string }[] | null;
   } | null;
 };
@@ -32,6 +36,9 @@ function mapApplication(row: ApplicationRow): Application {
     appliedAt: row.created_at,
     completedAt: row.completed_at || undefined,
     volunteerHours: row.volunteer_hours ?? 0,
+    volunteerResponse: row.volunteer_response ?? 'pending',
+    assignedRole: row.assigned_role || undefined,
+    organizationNote: row.organization_note || undefined,
   };
 }
 
@@ -43,7 +50,11 @@ const applicationSelect = `
   created_at,
   completed_at,
   volunteer_hours,
+  volunteer_response,
+  assigned_role,
+  organization_note,
   opportunities (
+    title,
     organizations (name)
   )
 `;
@@ -90,6 +101,9 @@ type OrganizationApplicationRow = {
   created_at: string;
   completed_at: string | null;
   volunteer_hours: number | null;
+  volunteer_response?: VolunteerResponseStatus | null;
+  assigned_role?: string | null;
+  organization_note?: string | null;
   opportunities?: {
     title: string;
     certificate_available: boolean;
@@ -110,6 +124,9 @@ export async function getOrganizationApplications(organizationId: string): Promi
       created_at,
       completed_at,
       volunteer_hours,
+      volunteer_response,
+      assigned_role,
+      organization_note,
       certificates (certificate_number),
       opportunities!inner (
         title,
@@ -148,6 +165,9 @@ export async function getOrganizationApplications(organizationId: string): Promi
       appliedAt: row.created_at,
       completedAt: row.completed_at || undefined,
       volunteerHours: row.volunteer_hours ?? 0,
+      volunteerResponse: row.volunteer_response ?? 'pending',
+      assignedRole: row.assigned_role || undefined,
+      organizationNote: row.organization_note || undefined,
       certificateAvailable: Boolean(opportunity?.certificate_available),
       certificateNumber: certificate?.certificate_number,
     };
@@ -162,4 +182,22 @@ export async function updateOrganizationApplicationStatus(applicationId: string,
     p_new_hours: status === 'completed' ? volunteerHours ?? 0 : 0,
   });
   if (error) throw new Error(`Failed to update application: ${error.message}`);
+}
+
+export async function updateOrganizationApplicationDetails(applicationId: string, values: { assignedRole?: string; organizationNote?: string }) {
+  const client = requireSupabase();
+  const { error } = await client
+    .from('applications')
+    .update({
+      assigned_role: values.assignedRole?.trim() || null,
+      organization_note: values.organizationNote?.trim() || null,
+    })
+    .eq('id', applicationId);
+  if (error) throw new Error(`Failed to update application details: ${error.message}`);
+}
+
+export async function updateVolunteerResponse(applicationId: string, response: Exclude<VolunteerResponseStatus, 'pending'>) {
+  const client = requireSupabase();
+  const { error } = await client.from('applications').update({ volunteer_response: response }).eq('id', applicationId);
+  if (error) throw new Error(`Failed to update volunteer response: ${error.message}`);
 }

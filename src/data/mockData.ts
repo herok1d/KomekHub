@@ -25,6 +25,8 @@ export const initialFilters: Filters = {
   format: 'All formats',
   schedule: 'Any schedule',
   language: 'Any language',
+  languages: [],
   badge: 'Any badge',
+  badges: [],
   sort: 'relevant',
 };

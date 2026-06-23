@@ -12,6 +12,9 @@ const selectOpportunity = `
     description,
     contact_email,
     website
+  ),
+  applications (
+    count
   )
 `;
 
@@ -49,6 +52,7 @@ function opportunityPayload(organizationId: string, input: OpportunityInput) {
     benefits: input.benefits.trim() || null,
     volunteer_hours: input.volunteerHours,
     certificate_available: input.certificateAvailable,
+    status: input.status,
     updated_at: new Date().toISOString(),
   };
 }
@@ -78,4 +82,16 @@ export async function deleteOpportunity(opportunityId: string) {
   if (!supabase) throw new Error(supabaseConfigError);
   const { error } = await supabase.from('opportunities').delete().eq('id', opportunityId);
   if (error) throw new Error(`Failed to delete opportunity: ${error.message}`);
+}
+
+export async function updateOpportunityStatus(opportunityId: string, status: string) {
+  if (!supabase) throw new Error(supabaseConfigError);
+  const { data, error } = await supabase
+    .from('opportunities')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', opportunityId)
+    .select(selectOpportunity)
+    .single();
+  if (error) throw new Error(`Failed to update opportunity status: ${error.message}`);
+  return mapOpportunityRowToOpportunity(data);
 }

@@ -6,6 +6,8 @@ export type Schedule = 'Few hours' | 'Weekend' | 'Part-time' | 'Project' | 'Flex
 export type VolunteerLanguage = 'Kazakh' | 'Russian' | 'English';
 export type SortKey = 'relevant' | 'newest' | 'nearest' | 'popular';
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
+export type OpportunityStatus = 'recruiting' | 'closed' | 'in_progress' | 'completed';
+export type VolunteerResponseStatus = 'pending' | 'accepted' | 'declined';
 
 export type LocalizedText = {
   en: string;
@@ -19,7 +21,9 @@ export type Filters = {
   format: string;
   schedule: string;
   language: string;
+  languages: string[];
   badge: string;
+  badges: string[];
   sort: SortKey;
 };
 
@@ -58,6 +62,8 @@ export type Opportunity = {
   languages: VolunteerLanguage[];
   volunteerHours: number;
   certificate: boolean;
+  status: OpportunityStatus;
+  applicationCount: number;
   postedDaysAgo: number;
   distanceKm: number;
   popularity: number;
@@ -101,6 +107,7 @@ export type OpportunityInput = {
   benefits: string;
   volunteerHours: number;
   certificateAvailable: boolean;
+  status: OpportunityStatus;
 };
 
 export type Profile = {
@@ -127,6 +134,9 @@ export type Application = {
   appliedAt: string;
   completedAt?: string;
   volunteerHours: number;
+  volunteerResponse: VolunteerResponseStatus;
+  assignedRole?: string;
+  organizationNote?: string;
 };
 
 export type OrganizationApplication = Application & {
@@ -135,6 +145,18 @@ export type OrganizationApplication = Application & {
   message?: string;
   certificateAvailable: boolean;
   certificateNumber?: string;
+};
+
+export type Notification = {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  relatedApplicationId?: string;
+  relatedOpportunityId?: string;
+  createdAt: string;
 };
 
 export type Certificate = {
