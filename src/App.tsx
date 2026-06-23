@@ -140,7 +140,10 @@ function KomekHubApp() {
 
   const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0];
   const appliedIds = applications.map((application) => application.opportunityId);
-  const userLabel = profile?.fullName || user?.email || '';
+  const ownedOrganization = organizations.find((organization) => organization.ownerId === user?.id);
+  const userLabel = profile?.role === 'organization'
+    ? ownedOrganization?.name || t('organizationAccount')
+    : profile?.fullName || user?.email || '';
   const filterOptions = useMemo<FilterOptions>(() => {
     const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
     return {

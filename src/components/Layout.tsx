@@ -1,4 +1,6 @@
-import { Globe2, LogOut, Menu, UserCircle, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Award, ChevronDown, Globe2, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserCircle, X } from 'lucide-react';
 import { Language, Page, UserRole } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { classNames } from '../utils/classNames';
@@ -29,7 +31,6 @@ export function Navbar({
     { page: 'home', label: t('navHome') },
     { page: 'list', label: t('navOpportunities') },
     { page: 'organization', label: t('navOrganizations') },
-    { page: 'verify', label: t('navVerify') },
   ];
   const isLoggedIn = Boolean(userLabel);
 
@@ -64,17 +65,7 @@ export function Navbar({
         <div className="hidden flex-shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
           <LanguageToggle language={language} onLanguageChange={onLanguageChange} />
           {isLoggedIn ? (
-            <>
-              <span className="hidden max-w-[140px] truncate rounded-full bg-slate-100 px-3 py-2 text-sm font-extrabold text-slate-700 2xl:block">{userLabel}</span>
-              <button onClick={() => onNavigate('profile')} className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-ocean hover:text-ocean xl:px-4">
-                <UserCircle size={17} />
-                <span className="hidden xl:inline">{t('navProfile')}</span>
-              </button>
-              <button onClick={onSignOut} className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-rose-300 hover:text-rose-700 xl:px-4">
-                <LogOut size={17} />
-                <span className="hidden xl:inline">{t('signOut')}</span>
-              </button>
-            </>
+            <AccountDropdown userLabel={userLabel} userRole={userRole} onNavigate={onNavigate} onSignOut={onSignOut} language={language} />
           ) : (
             <>
               <button onClick={() => onNavigate('sign-in')} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-ocean hover:text-ocean">
@@ -84,14 +75,6 @@ export function Navbar({
                 {t('signUp')}
               </button>
             </>
-          )}
-          {userRole === 'organization' && (
-            <button
-              onClick={() => onNavigate('dashboard')}
-              className="whitespace-nowrap rounded-full bg-ink px-4 py-2.5 text-sm font-bold text-white shadow-soft transition-colors hover:bg-slate-800 xl:px-5"
-            >
-              {t('dashboard')}
-            </button>
           )}
         </div>
 
@@ -112,14 +95,19 @@ export function Navbar({
             {isLoggedIn ? (
               <>
                 <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-700">{userLabel}</div>
-                <button onClick={() => onNavigate('profile')} className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                  {t('navProfile')}
-                </button>
                 {userRole === 'organization' && (
-                  <button onClick={() => onNavigate('dashboard')} className="rounded-xl bg-ink px-4 py-3 text-left text-sm font-bold text-white">
-                    {t('dashboard')}
-                  </button>
+                  <>
+                    <MobileAccountLink label={t('dashboard')} icon={<LayoutDashboard size={17} />} onClick={() => onNavigate('dashboard')} />
+                    <MobileAccountLink label={t('organizationSettings')} icon={<Settings size={17} />} onClick={() => onNavigate('dashboard')} />
+                  </>
                 )}
+                {userRole !== 'organization' && (
+                  <>
+                    <MobileAccountLink label={t('navProfile')} icon={<UserCircle size={17} />} onClick={() => onNavigate('profile')} />
+                    <MobileAccountLink label={t('myCertificates')} icon={<Award size={17} />} onClick={() => onNavigate('profile')} />
+                  </>
+                )}
+                <MobileAccountLink label={t('verifyCertificate')} icon={<ShieldCheck size={17} />} onClick={() => onNavigate('verify')} />
                 <button onClick={onSignOut} className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50">
                   <LogOut size={17} />
                   {t('signOut')}
@@ -139,6 +127,106 @@ export function Navbar({
         </div>
       )}
     </header>
+  );
+}
+
+function AccountDropdown({
+  userLabel,
+  userRole,
+  language,
+  onNavigate,
+  onSignOut,
+}: {
+  userLabel?: string;
+  userRole?: UserRole;
+  language: Language;
+  onNavigate: (page: Page) => void;
+  onSignOut: () => void;
+}) {
+  const { t } = useI18n(language);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isOrganization = userRole === 'organization';
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+  }, []);
+
+  const navigate = (page: Page) => {
+    setOpen(false);
+    onNavigate(page);
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex max-w-[190px] items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
+      >
+        <UserCircle size={18} className="flex-shrink-0 text-ocean" />
+        <span className="min-w-0 truncate">{userLabel}</span>
+        <ChevronDown size={15} className={classNames('flex-shrink-0 transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div role="menu" className="absolute right-0 top-[calc(100%+10px)] z-50 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          <div className="border-b border-slate-100 px-3 py-2">
+            <p className="truncate text-sm font-extrabold text-slate-800">{userLabel}</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-500">{isOrganization ? t('organizationAccount') : t('roleVolunteer')}</p>
+          </div>
+          <div className="mt-1 grid gap-1">
+            {isOrganization ? (
+              <>
+                <DropdownItem label={t('dashboard')} icon={<LayoutDashboard size={17} />} onClick={() => navigate('dashboard')} />
+                <DropdownItem label={t('organizationSettings')} icon={<Settings size={17} />} onClick={() => navigate('dashboard')} />
+              </>
+            ) : (
+              <>
+                <DropdownItem label={t('navProfile')} icon={<UserCircle size={17} />} onClick={() => navigate('profile')} />
+                <DropdownItem label={t('myCertificates')} icon={<Award size={17} />} onClick={() => navigate('profile')} />
+              </>
+            )}
+            <DropdownItem label={t('verifyCertificate')} icon={<ShieldCheck size={17} />} onClick={() => navigate('verify')} />
+            <button
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
+              className="inline-flex w-full items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-bold text-rose-700 transition-colors hover:bg-rose-50"
+            >
+              <LogOut size={17} />
+              {t('signOut')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DropdownItem({ label, icon, onClick }: { label: string; icon: ReactNode; onClick: () => void }) {
+  return (
+    <button role="menuitem" onClick={onClick} className="inline-flex w-full items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-ink">
+      <span className="text-slate-500">{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+function MobileAccountLink({ label, icon, onClick }: { label: string; icon: ReactNode; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="inline-flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
+      <span className="text-slate-500">{icon}</span>
+      {label}
+    </button>
   );
 }
 
@@ -183,23 +271,23 @@ export function Footer({ language, onNavigate }: { language: Language; onNavigat
           <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">{t('footerText')}</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
-          <FooterGroup title={t('product')} items={[t('navOpportunities'), t('navProfile')]} onClick={() => onNavigate('list')} />
-          <FooterGroup title={t('navOrganizations')} items={[t('postOpportunity'), t('reviews')]} onClick={() => onNavigate('organization')} />
-          <FooterGroup title={t('support')} items={[t('helpCenter'), t('contact')]} onClick={() => onNavigate('home')} />
+          <FooterGroup title={t('product')} items={[{ label: t('navHome'), page: 'home' }, { label: t('navOpportunities'), page: 'list' }]} onNavigate={onNavigate} />
+          <FooterGroup title={t('navOrganizations')} items={[{ label: t('postOpportunity'), page: 'post' }, { label: t('reviews'), page: 'organization' }]} onNavigate={onNavigate} />
+          <FooterGroup title={t('support')} items={[{ label: t('helpCenter'), page: 'home' }, { label: t('contact'), page: 'home' }, { label: t('verifyCertificate'), page: 'verify' }]} onNavigate={onNavigate} />
         </div>
       </div>
     </footer>
   );
 }
 
-function FooterGroup({ title, items, onClick }: { title: string; items: string[]; onClick: () => void }) {
+function FooterGroup({ title, items, onNavigate }: { title: string; items: Array<{ label: string; page: Page }>; onNavigate: (page: Page) => void }) {
   return (
     <div>
       <h3 className="font-extrabold">{title}</h3>
       <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-500">
         {items.map((item) => (
-          <button key={item} onClick={onClick} className="w-fit hover:text-ocean">
-            {item}
+          <button key={item.label} onClick={() => onNavigate(item.page)} className="w-fit hover:text-ocean">
+            {item.label}
           </button>
         ))}
       </div>
