@@ -17,6 +17,7 @@ export function Navbar({
   onSignOut,
   notifications = [],
   onMarkNotificationsRead,
+  onNotificationClick,
 }: {
   activePage: Page;
   language: Language;
@@ -29,6 +30,7 @@ export function Navbar({
   onSignOut: () => void;
   notifications?: Notification[];
   onMarkNotificationsRead?: () => void;
+  onNotificationClick?: (notification: Notification) => void;
 }) {
   const { t } = useI18n(language);
   const links: Array<{ page: Page; label: string }> = [
@@ -70,7 +72,7 @@ export function Navbar({
           <LanguageToggle language={language} onLanguageChange={onLanguageChange} />
           {isLoggedIn ? (
             <>
-              <NotificationBell notifications={notifications} language={language} onMarkRead={onMarkNotificationsRead} />
+              <NotificationBell notifications={notifications} language={language} onMarkRead={onMarkNotificationsRead} onNotificationClick={onNotificationClick} />
               <AccountDropdown userLabel={userLabel} userRole={userRole} onNavigate={onNavigate} onSignOut={onSignOut} language={language} />
             </>
           ) : (
@@ -150,7 +152,7 @@ export function Navbar({
   );
 }
 
-function NotificationBell({ notifications, language, onMarkRead }: { notifications: Notification[]; language: Language; onMarkRead?: () => void }) {
+function NotificationBell({ notifications, language, onMarkRead, onNotificationClick }: { notifications: Notification[]; language: Language; onMarkRead?: () => void; onNotificationClick?: (notification: Notification) => void }) {
   const { t } = useI18n(language);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -170,7 +172,6 @@ function NotificationBell({ notifications, language, onMarkRead }: { notificatio
         type="button"
         onClick={async () => {
           setOpen((current) => !current);
-          if (!open && unread > 0) await onMarkRead?.();
         }}
         className="relative rounded-full border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
         aria-label={t('notifications')}
@@ -186,10 +187,17 @@ function NotificationBell({ notifications, language, onMarkRead }: { notificatio
               <p className="px-3 py-4 text-sm font-semibold text-slate-500">{t('noNotifications')}</p>
             ) : (
               notifications.slice(0, 8).map((notification) => (
-                <div key={notification.id} className="rounded-xl px-3 py-2.5 hover:bg-slate-50">
+                <button
+                  key={notification.id}
+                  onClick={() => {
+                    setOpen(false);
+                    onNotificationClick?.(notification);
+                  }}
+                  className="w-full rounded-xl px-3 py-2.5 text-left hover:bg-slate-50"
+                >
                   <p className="text-sm font-extrabold text-slate-800">{notification.title}</p>
                   <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{notification.message}</p>
-                </div>
+                </button>
               ))
             )}
           </div>
@@ -324,7 +332,7 @@ function LanguageToggle({ language, onLanguageChange }: { language: Language; on
   );
 }
 
-export function Footer({ language, onNavigate }: { language: Language; onNavigate: (page: Page) => void }) {
+export function Footer({ language, onNavigate, userRole }: { language: Language; onNavigate: (page: Page) => void; userRole?: UserRole }) {
   const { t } = useI18n(language);
 
   return (
@@ -341,7 +349,7 @@ export function Footer({ language, onNavigate }: { language: Language; onNavigat
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <FooterGroup title={t('product')} items={[{ label: t('navHome'), page: 'home' }, { label: t('navOpportunities'), page: 'list' }]} onNavigate={onNavigate} />
-          <FooterGroup title={t('navOrganizations')} items={[{ label: t('postOpportunity'), page: 'post' }, { label: t('reviews'), page: 'organization' }]} onNavigate={onNavigate} />
+          <FooterGroup title={t('navOrganizations')} items={[...(userRole === 'organization' ? [{ label: t('postOpportunity'), page: 'post' as Page }] : []), { label: t('reviews'), page: 'organization' }]} onNavigate={onNavigate} />
           <FooterGroup title={t('support')} items={[{ label: t('helpCenter'), page: 'home' }, { label: t('contact'), page: 'home' }, { label: t('verifyCertificate'), page: 'verify' }]} onNavigate={onNavigate} />
         </div>
       </div>

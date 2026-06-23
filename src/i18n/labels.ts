@@ -1,4 +1,4 @@
-import { Language } from '../types';
+﻿import { Language } from '../types';
 
 const labels: Record<string, Record<Language, string>> = {
   'All Kazakhstan': { en: 'All Kazakhstan', ru: 'Все города' },
@@ -33,9 +33,6 @@ const labels: Record<string, Record<Language, string>> = {
   Certificate: { en: 'Certificate', ru: 'Сертификат' },
   Urgent: { en: 'Urgent', ru: 'Срочно' },
   'No experience needed': { en: 'No experience needed', ru: 'Опыт не нужен' },
-  'Kazakh language': { en: 'Kazakh language', ru: 'Казахский язык' },
-  'Russian language': { en: 'Russian language', ru: 'Русский язык' },
-  'English language': { en: 'English language', ru: 'Английский язык' },
   'Flexible schedule': { en: 'Flexible schedule', ru: 'Гибкий график' },
   recruiting: { en: 'Recruiting', ru: 'Идёт набор' },
   closed: { en: 'Closed', ru: 'Набор закрыт' },

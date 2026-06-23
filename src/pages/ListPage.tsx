@@ -2,7 +2,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { initialFilters } from '../data/mockData';
 import { useI18n } from '../i18n/useI18n';
-import { FilterOptions, Filters, Language, Opportunity } from '../types';
+import { Application, FilterOptions, Filters, Language, Opportunity } from '../types';
 import { SearchPanel } from '../components/SearchPanel';
 import { EmptyState } from '../components/ui';
 import { OpportunityCard } from '../components/OpportunityCard';
@@ -16,10 +16,13 @@ export function ListPage({
   totalOpportunityCount,
   filterOptions,
   onOpenOpportunity,
+  onOpenOrganization,
   onApply,
   savedIds,
   appliedIds,
+  applicationByOpportunity,
   onSave,
+  onWithdraw,
 }: {
   language: Language;
   filters: Filters;
@@ -28,10 +31,13 @@ export function ListPage({
   totalOpportunityCount: number;
   filterOptions: FilterOptions;
   onOpenOpportunity: (id: string) => void;
+  onOpenOrganization: (id?: string) => void;
   onApply: (id: string) => void;
   savedIds: string[];
   appliedIds: string[];
+  applicationByOpportunity: Map<string, Application>;
   onSave: (id: string) => void;
+  onWithdraw: (id: string) => void;
 }) {
   const { t } = useI18n(language);
   const [draftFilters, setDraftFilters] = useState(filters);
@@ -115,10 +121,12 @@ export function ListPage({
                   opportunity={item}
                   language={language}
                   onOpen={() => onOpenOpportunity(item.id)}
+                  onOpenOrganization={() => onOpenOrganization(item.organizationId)}
                   onApply={() => onApply(item.id)}
                   isSaved={savedIds.includes(item.id)}
-                  isApplied={appliedIds.includes(item.id)}
+                  application={applicationByOpportunity.get(item.id)}
                   onToggleSave={() => onSave(item.id)}
+                  onWithdraw={() => onWithdraw(item.id)}
                 />
               ))}
             </div>

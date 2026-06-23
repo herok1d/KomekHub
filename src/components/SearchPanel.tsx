@@ -67,23 +67,8 @@ function MultiSelect({ label, values, selected, language, onToggle }: { label: s
     <div className="grid gap-2">
       <span className="text-sm font-extrabold text-slate-700">{label}</span>
       <div className="min-h-12 rounded-2xl border border-slate-200 bg-white p-2">
-        <div className="flex flex-wrap gap-1.5">
-          {values.map((value) => {
-            const active = selected.includes(value);
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => onToggle(value)}
-                className={`rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors ${active ? 'bg-ink text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-              >
-                {labelFor(value, language)}
-              </button>
-            );
-          })}
-        </div>
         {selected.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
+          <div className="mb-2 flex flex-wrap gap-1.5">
             {selected.map((value) => (
               <button key={value} type="button" onClick={() => onToggle(value)} className="inline-flex items-center gap-1 rounded-full bg-mint px-2.5 py-1 text-xs font-extrabold text-leaf">
                 {labelFor(value, language)}
@@ -92,6 +77,18 @@ function MultiSelect({ label, values, selected, language, onToggle }: { label: s
             ))}
           </div>
         )}
+        <div className="flex flex-wrap gap-1.5">
+          {values.filter((value) => !selected.includes(value)).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onToggle(value)}
+              className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-extrabold text-slate-600 transition-colors hover:bg-slate-200"
+            >
+              {labelFor(value, language)}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

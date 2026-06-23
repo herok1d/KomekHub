@@ -1,7 +1,7 @@
 import { BadgeCheck, BriefcaseBusiness, CalendarDays, Languages, MapPin, Star } from 'lucide-react';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
-import { Language, Opportunity, Organization } from '../types';
+import { Application, Language, Opportunity, Organization } from '../types';
 import { Badge, Pill, SectionHeader } from '../components/ui';
 import { OpportunityCard } from '../components/OpportunityCard';
 import { detailTags, sortedUniqueBadges } from '../utils/badges';
@@ -15,7 +15,10 @@ export function DetailPage({
   appliedIds,
   onApply,
   onSave,
+  application,
+  onWithdraw,
   onOpenOpportunity,
+  onOpenOrganization,
 }: {
   language: Language;
   opportunity: Opportunity;
@@ -25,7 +28,10 @@ export function DetailPage({
   appliedIds: string[];
   onApply: (id: string) => void;
   onSave: (id: string) => void;
+  application?: Application;
+  onWithdraw: () => void;
   onOpenOpportunity: (id: string) => void;
+  onOpenOrganization: (id?: string) => void;
 }) {
   const { t, localize } = useI18n(language);
   const organization = organizations.find((item) => item.id === opportunity.organizationId || item.name === opportunity.organization);
@@ -33,7 +39,9 @@ export function DetailPage({
   const badges = sortedUniqueBadges([...opportunity.badges, ...(opportunity.certificate ? ['Certificate'] : [])]).slice(0, 3);
   const tags = detailTags(opportunity.tags, badges);
   const canApply = opportunity.status === 'recruiting';
-  const applyDisabled = appliedIds.includes(opportunity.id) || !canApply;
+  const activeApplication = application && application.status !== 'cancelled' ? application : undefined;
+  const canWithdraw = activeApplication?.status === 'pending';
+  const applyDisabled = Boolean(activeApplication && !canWithdraw) || (!canWithdraw && !canApply);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -49,10 +57,10 @@ export function DetailPage({
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">{localize(opportunity.title)}</h1>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
-            <span className="flex items-center gap-1.5">
+            <button onClick={() => onOpenOrganization(organization?.id)} className="flex items-center gap-1.5 transition hover:text-ocean">
               <BriefcaseBusiness size={17} />
               {opportunity.organization}
-            </span>
+            </button>
             <span className="flex items-center gap-1.5">
               <MapPin size={17} />
               {labelFor(opportunity.city, language)}
@@ -85,11 +93,11 @@ export function DetailPage({
         <aside className="grid h-fit gap-5">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
             <button
-              onClick={() => onApply(opportunity.id)}
+              onClick={canWithdraw ? onWithdraw : () => onApply(opportunity.id)}
               disabled={applyDisabled}
               className="pressable flex w-full items-center justify-center rounded-2xl bg-ocean px-5 py-4 text-base font-extrabold text-white shadow-soft transition hover:bg-blue-600 disabled:bg-slate-400"
             >
-              {appliedIds.includes(opportunity.id) ? t('applied') : canApply ? t('applyNow') : t(opportunity.status)}
+              {canWithdraw ? t('withdrawApplication') : activeApplication ? t(activeApplication.status) : canApply ? t('applyNow') : t(opportunity.status)}
             </button>
             <button
               onClick={() => onSave(opportunity.id)}
@@ -100,7 +108,7 @@ export function DetailPage({
           </div>
 
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
-            <h2 className="text-lg font-extrabold">{t('aboutOrganization')}</h2>
+            <button onClick={() => onOpenOrganization(organization?.id)} className="text-left text-lg font-extrabold transition hover:text-ocean">{t('aboutOrganization')}</button>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               {organization ? localize(organization.description) : opportunity.organization}
             </p>
@@ -125,7 +133,7 @@ export function DetailPage({
               onOpen={() => onOpenOpportunity(item.id)}
               onApply={() => onApply(item.id)}
               isSaved={savedIds.includes(item.id)}
-              isApplied={appliedIds.includes(item.id)}
+              application={undefined}
               onToggleSave={() => onSave(item.id)}
             />
           ))}

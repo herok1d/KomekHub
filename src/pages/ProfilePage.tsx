@@ -260,7 +260,7 @@ export function ProfilePage({
                 onOpen={() => onOpenOpportunity(item.id)}
                 onApply={() => onApply(item.id)}
                 isSaved
-                isApplied={appliedIds.includes(item.id)}
+                application={applications.find((application) => application.opportunityId === item.id)}
                 onToggleSave={() => onSave(item.id)}
               />
             ))}

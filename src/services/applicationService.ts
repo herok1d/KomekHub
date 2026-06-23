@@ -73,6 +73,32 @@ export async function getAppliedOpportunityIds(userId: string): Promise<string[]
 
 export async function applyToOpportunity(userId: string, opportunityId: string, message?: string): Promise<Application | null> {
   const client = requireSupabase();
+  const { data: existing, error: existingError } = await client
+    .from('applications')
+    .select(applicationSelect)
+    .eq('user_id', userId)
+    .eq('opportunity_id', opportunityId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) {
+    const existingApplication = mapApplication(existing as unknown as ApplicationRow);
+    if (existingApplication.status !== 'cancelled') return null;
+    const { data, error } = await client
+      .from('applications')
+      .update({
+        status: 'pending',
+        volunteer_response: 'pending',
+        message: message?.trim() || null,
+        completed_at: null,
+        volunteer_hours: 0,
+      })
+      .eq('id', existingApplication.id)
+      .select(applicationSelect)
+      .single();
+    if (error) throw new Error(error.message);
+    return mapApplication(data as unknown as ApplicationRow);
+  }
+
   const { data, error } = await client
     .from('applications')
     .insert({
@@ -90,6 +116,12 @@ export async function applyToOpportunity(userId: string, opportunityId: string, 
     throw new Error(error.message);
   }
   return mapApplication(data as unknown as ApplicationRow);
+}
+
+export async function withdrawApplication(applicationId: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.from('applications').update({ status: 'cancelled' }).eq('id', applicationId).eq('status', 'pending');
+  if (error) throw new Error(error.message);
 }
 
 type OrganizationApplicationRow = {

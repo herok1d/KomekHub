@@ -37,6 +37,14 @@ function text(value: string | null | undefined) {
   return { en: value || '', ru: value || '' };
 }
 
+function normalizeLanguage(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'kazakh' || normalized === 'қазақша' || normalized === 'казахский') return 'Kazakh';
+  if (normalized === 'russian' || normalized === 'русский') return 'Russian';
+  if (normalized === 'english' || normalized === 'английский') return 'English';
+  return value.trim();
+}
+
 export function mapOrganizationRowToOrganization(row: OrganizationRow): Organization {
   return {
     id: row.id,
@@ -58,6 +66,7 @@ export function mapOpportunityRowToOpportunity(row: OpportunityRow): Opportunity
   const organization = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations;
   const badges = (row.badges ?? []).filter((badge) => !badge.toLowerCase().includes('language'));
   const certificate = Boolean(row.certificate_available);
+  const languages = [...new Set((row.languages ?? []).map(normalizeLanguage).filter(Boolean))] as Opportunity['languages'];
   return {
     id: row.id,
     organizationId: row.organization_id || undefined,
@@ -76,7 +85,7 @@ export function mapOpportunityRowToOpportunity(row: OpportunityRow): Opportunity
     benefits: row.benefits ? [text(row.benefits)] : [],
     tags: [...new Set(badges)],
     badges: certificate ? [...new Set([...badges, 'Certificate'])] : badges,
-    languages: (row.languages ?? []) as Opportunity['languages'],
+    languages,
     volunteerHours: row.volunteer_hours ?? 0,
     certificate,
     status: (row.status || 'recruiting') as Opportunity['status'],

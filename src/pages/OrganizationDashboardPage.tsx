@@ -142,6 +142,10 @@ export function OrganizationDashboardPage({
     }
     try {
       const previous = applications.find((application) => application.id === applicationId);
+      if (previous?.certificateNumber && (status !== previous.status || volunteerHours !== undefined)) {
+        onNotify(t('certificateLockedMessage'));
+        return;
+      }
       await updateOrganizationApplicationStatus(applicationId, status, volunteerHours);
       let issuedCertificateNumber = '';
       if (status === 'completed' && previous?.certificateAvailable) {
@@ -169,7 +173,8 @@ export function OrganizationDashboardPage({
       await loadDashboard();
       onNotify(t(status === 'completed' && previous?.certificateAvailable ? 'certificateIssued' : previous?.status === 'completed' || status === 'completed' ? 'hoursUpdated' : 'applicationStatusUpdated'));
     } catch (statusError) {
-      onNotify(statusError instanceof Error ? statusError.message : t('applicationUpdateFailed'));
+      const message = statusError instanceof Error ? statusError.message : '';
+      onNotify(message.toLowerCase().includes('certificate') ? t('certificateLockedMessage') : message || t('applicationUpdateFailed'));
     }
   }
 
@@ -324,6 +329,7 @@ function ApplicationManager({
   const [hours, setHours] = useState(String(application.volunteerHours || ''));
   const [assignedRole, setAssignedRole] = useState(application.assignedRole ?? '');
   const [organizationNote, setOrganizationNote] = useState(application.organizationNote ?? '');
+  const lockedByCertificate = Boolean(application.certificateNumber);
   return (
     <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
       <div className="grid gap-5 xl:grid-cols-[1fr_190px_360px] xl:items-start">
@@ -354,12 +360,12 @@ function ApplicationManager({
             <p className="mt-3 text-xs font-bold text-slate-400">{t('certificateNotAvailableForOpportunity')}</p>
           )}
         </div>
-        <select value={application.status} onChange={(event) => onUpdate(application.id, event.target.value as ApplicationStatus)} className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-bold focus:border-ocean focus:outline-none">
+        <select disabled={lockedByCertificate} value={application.status} onChange={(event) => onUpdate(application.id, event.target.value as ApplicationStatus)} className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-bold focus:border-ocean focus:outline-none disabled:bg-slate-100 disabled:text-slate-400">
           {(['pending', 'accepted', 'rejected', 'completed', 'cancelled'] as ApplicationStatus[]).map((status) => <option key={status} value={status} disabled={status === 'completed'}>{t(status)}</option>)}
         </select>
         <div className="flex gap-2">
-          <input value={hours} onChange={(event) => setHours(event.target.value)} type="number" min="1" placeholder={t('volunteerHours')} className="min-w-0 flex-1 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold focus:border-ocean focus:outline-none" />
-          <button onClick={() => onUpdate(application.id, 'completed', Number(hours))} className="inline-flex items-center gap-2 rounded-2xl bg-leaf px-4 py-2 text-sm font-extrabold text-white"><Check size={16} />{t('markCompleted')}</button>
+          <input disabled={lockedByCertificate} value={hours} onChange={(event) => setHours(event.target.value)} type="number" min="1" placeholder={t('volunteerHours')} className="min-w-0 flex-1 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold focus:border-ocean focus:outline-none disabled:bg-slate-100 disabled:text-slate-400" />
+          <button disabled={lockedByCertificate} onClick={() => onUpdate(application.id, 'completed', Number(hours))} className="inline-flex items-center gap-2 rounded-2xl bg-leaf px-4 py-2 text-sm font-extrabold text-white disabled:bg-slate-400"><Check size={16} />{t('markCompleted')}</button>
         </div>
       </div>
     </article>

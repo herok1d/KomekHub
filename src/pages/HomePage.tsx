@@ -1,11 +1,10 @@
-import { BookOpen, Building2, CheckCircle2, HeartHandshake, Leaf, Palette, Sparkles, Stethoscope, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Building2, CheckCircle2, HeartHandshake, Leaf, Palette, Sparkles, Stethoscope, Users } from 'lucide-react';
 import { categories } from '../data/mockData';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
-import { FilterOptions, Filters, Language, Opportunity, Page } from '../types';
-import { SearchPanel } from '../components/SearchPanel';
+import { Application, Filters, Language, Opportunity, Page } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
-import { EmptyState, SectionHeader } from '../components/ui';
+import { EmptyState, SearchInput, SectionHeader } from '../components/ui';
 
 const icons = [BookOpen, Stethoscope, Leaf, HeartHandshake, Users, Sparkles, Palette, Building2];
 
@@ -14,27 +13,31 @@ export function HomePage({
   filters,
   setFilters,
   opportunities,
-  filterOptions,
   featuredOpportunities,
   onNavigate,
   onOpenOpportunity,
+  onOpenOrganization,
   onApply,
   savedIds,
   appliedIds,
   onSave,
+  applicationByOpportunity,
+  onWithdraw,
 }: {
   language: Language;
   filters: Filters;
   setFilters: (filters: Filters) => void;
   opportunities: Opportunity[];
-  filterOptions: FilterOptions;
   featuredOpportunities: Opportunity[];
   onNavigate: (page: Page) => void;
   onOpenOpportunity: (id: string) => void;
+  onOpenOrganization: (id?: string) => void;
   onApply: (id: string) => void;
   savedIds: string[];
   appliedIds: string[];
   onSave: (id: string) => void;
+  applicationByOpportunity: Map<string, Application>;
+  onWithdraw: (id: string) => void;
 }) {
   const { t } = useI18n(language);
   const categoryCounts = new Map<string, number>();
@@ -54,23 +57,16 @@ export function HomePage({
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/88">{t('heroSubtitle')}</p>
             </div>
             <div className="glass-panel rounded-[2rem] p-4 shadow-lift sm:p-5">
-              <SearchPanel
-                filters={filters}
-                setFilters={setFilters}
-                language={language}
-                options={filterOptions}
-                labels={{
-                  searchPlaceholder: t('searchPlaceholder'),
-                  city: t('city'),
-                  category: t('category'),
-                  format: t('format'),
-                  schedule: t('schedule'),
-                  language: t('language'),
-                  badge: t('badge'),
-                  searchButton: t('searchButton'),
-                }}
-                onSearch={() => onNavigate('list')}
-              />
+              <div className="grid gap-3">
+                <SearchInput value={filters.query} placeholder={t('searchPlaceholder')} onChange={(query) => setFilters({ ...filters, query })} />
+                <button
+                  onClick={() => onNavigate('list')}
+                  className="pressable flex h-14 items-center justify-center gap-2 rounded-2xl bg-ocean px-6 text-base font-extrabold text-white shadow-soft transition hover:bg-blue-600"
+                >
+                  {t('searchButton')}
+                  <ArrowRight size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -121,10 +117,12 @@ export function HomePage({
                   opportunity={item}
                   language={language}
                   onOpen={() => onOpenOpportunity(item.id)}
+                  onOpenOrganization={() => onOpenOrganization(item.organizationId)}
                   onApply={() => onApply(item.id)}
                   isSaved={savedIds.includes(item.id)}
-                  isApplied={appliedIds.includes(item.id)}
+                  application={applicationByOpportunity.get(item.id)}
                   onToggleSave={() => onSave(item.id)}
+                  onWithdraw={() => onWithdraw(item.id)}
                 />
               ))}
             </div>
