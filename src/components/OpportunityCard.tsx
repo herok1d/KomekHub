@@ -34,6 +34,7 @@ export function OpportunityCard({
   const activeApplication = application && application.status !== 'cancelled' ? application : undefined;
   const canWithdraw = activeApplication?.status === 'pending';
   const applyDisabled = Boolean(activeApplication && !canWithdraw) || (!canWithdraw && !canApply);
+  const locationLabel = opportunity.format === 'Online' ? labelFor('Online', language) : labelFor(opportunity.city, language);
 
   return (
     <article className="group flex min-h-[360px] flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition-shadow duration-200 hover:border-ocean/30 hover:shadow-lift sm:p-6">
@@ -43,6 +44,7 @@ export function OpportunityCard({
             {badges.map((badge) => (
               <Badge key={badge} label={badge} language={language} />
             ))}
+            {opportunity.minAge && <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-extrabold text-slate-600">{opportunity.minAge}+</span>}
             <span className={classNames('rounded-full px-3 py-1 text-xs font-extrabold', canApply ? 'bg-mint text-leaf' : 'bg-slate-100 text-slate-600')}>
               {t(opportunity.status)}
             </span>
@@ -64,7 +66,7 @@ export function OpportunityCard({
             </button>
             <span className="flex items-center gap-1.5">
               <MapPin size={16} />
-              {labelFor(opportunity.city, language)}
+              {locationLabel}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock size={16} />

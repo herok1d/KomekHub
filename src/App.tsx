@@ -24,6 +24,8 @@ import { useLocalStorageState } from './utils/storage';
 import { createNotification, getUserNotifications, markAllNotificationsRead, markNotificationRead } from './services/notificationService';
 
 const ALLOWED_BADGES = ['Certificate', 'Flexible schedule', 'No experience needed', 'Online', 'Student-friendly', 'Urgent', 'Weekend'];
+const AGE_OPTIONS = ['Any age', '14+', '16+', '18+', '21+'];
+const NON_CITY_LOCATION_VALUES = new Set(['Online', 'Kazakhstan']);
 
 export default function App() {
   return (
@@ -158,11 +160,13 @@ function KomekHubApp() {
     : profile?.fullName || user?.email || '';
   const filterOptions = useMemo<FilterOptions>(() => {
     const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const cityValues = opportunities.map((item) => item.city).filter((city) => !NON_CITY_LOCATION_VALUES.has(city));
     return {
-      cities: ['All cities', ...unique(opportunities.map((item) => item.city))],
+      cities: ['All cities', ...unique(cityValues)],
       categories: ['All categories', ...categories.map((category) => category.name)],
       formats: ['All formats', ...unique(opportunities.map((item) => item.format))],
       schedules: ['Any schedule', ...unique(opportunities.map((item) => item.schedule))],
+      ages: AGE_OPTIONS,
       languages: ['Any language', 'English', 'Kazakh', 'Russian'],
       badges: ['Any badge', ...ALLOWED_BADGES],
     };
@@ -170,12 +174,14 @@ function KomekHubApp() {
 
   const filteredOpportunities = useMemo(() => {
     const normalizedQuery = filters.query.trim().toLowerCase();
+    const selectedAge = filters.age === 'Any age' ? null : Number(filters.age.replace('+', ''));
     const list = opportunities.filter((item) => {
+      const locationLabel = item.format === 'Online' ? labelFor('Online', language) : labelFor(item.city, language);
       const searchable = [
         localize(item.title),
         item.organization,
         item.city,
-        labelFor(item.city, language),
+        locationLabel,
         item.category,
         labelFor(item.category, language),
         localize(item.description),
@@ -190,16 +196,18 @@ function KomekHubApp() {
         ...item.badges.map((badge) => labelFor(badge, language)),
         ...item.languages,
         ...item.languages.map((itemLanguage) => labelFor(itemLanguage, language)),
+        item.minAge ? `${item.minAge}+` : '',
       ]
         .join(' ')
         .toLowerCase();
 
       return (
         (!normalizedQuery || searchable.includes(normalizedQuery)) &&
-        (filters.city === 'All cities' || item.city === filters.city || (filters.city === 'Online' && item.format === 'Online')) &&
+        (filters.city === 'All cities' || item.city === filters.city) &&
         (filters.category === 'All categories' || item.category === filters.category) &&
         (filters.format === 'All formats' || item.format === filters.format) &&
         (filters.schedule === 'Any schedule' || item.schedule === filters.schedule) &&
+        (!selectedAge || !item.minAge || item.minAge <= selectedAge) &&
         (filters.languages.length === 0 || filters.languages.every((languageFilter) => item.languages.includes(languageFilter as never))) &&
         (filters.badges.length === 0 || filters.badges.every((badgeFilter) => item.badges.includes(badgeFilter) || (badgeFilter === 'Certificate' && item.certificate) || (badgeFilter === 'Online' && item.format === 'Online') || (badgeFilter === 'Weekend' && item.schedule === 'Weekend')))
       );

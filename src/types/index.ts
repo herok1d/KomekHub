@@ -20,6 +20,7 @@ export type Filters = {
   category: string;
   format: string;
   schedule: string;
+  age: string;
   language: string;
   languages: string[];
   badge: string;
@@ -37,6 +38,7 @@ export type FilterOptions = {
   categories: string[];
   formats: string[];
   schedules: string[];
+  ages: string[];
   languages: string[];
   badges: string[];
 };
@@ -61,6 +63,7 @@ export type Opportunity = {
   badges: string[];
   languages: VolunteerLanguage[];
   volunteerHours: number;
+  minAge?: number;
   certificate: boolean;
   status: OpportunityStatus;
   applicationCount: number;
@@ -106,6 +109,7 @@ export type OpportunityInput = {
   requirements: string;
   benefits: string;
   volunteerHours: number;
+  minAge?: number | null;
   certificateAvailable: boolean;
   status: OpportunityStatus;
 };

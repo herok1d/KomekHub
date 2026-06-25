@@ -21,6 +21,7 @@ export function SearchPanel({
     category: string;
     format: string;
     schedule: string;
+    age: string;
     language: string;
     badge: string;
     searchButton: string;
@@ -48,6 +49,7 @@ export function SearchPanel({
         <SelectCombobox label={labels.schedule} value={filters.schedule} options={toOptions(options.schedules)} onChange={(schedule) => setFilters({ ...filters, schedule })} />
         <MultiSelect label={labels.language} values={multiOptions.languages} selected={filters.languages} language={language} onToggle={(value) => toggleListValue('languages', value)} />
         <MultiSelect label={labels.badge} values={multiOptions.badges} selected={filters.badges} language={language} onToggle={(value) => toggleListValue('badges', value)} />
+        <SelectCombobox label={labels.age} value={filters.age} options={toOptions(options.ages)} onChange={(age) => setFilters({ ...filters, age })} />
       </div>
       {onSearch && (
         <button
@@ -66,18 +68,20 @@ function MultiSelect({ label, values, selected, language, onToggle }: { label: s
   return (
     <div className="grid gap-2">
       <span className="text-sm font-extrabold text-slate-700">{label}</span>
-      <div className="min-h-12 rounded-2xl border border-slate-200 bg-white p-2">
-        {selected.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {selected.map((value) => (
+      <div className="flex min-h-[96px] flex-col rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="flex min-h-8 flex-wrap content-start gap-1.5">
+          {selected.length > 0 ? (
+            selected.map((value) => (
               <button key={value} type="button" onClick={() => onToggle(value)} className="inline-flex items-center gap-1 rounded-full bg-mint px-2.5 py-1 text-xs font-extrabold text-leaf">
                 {labelFor(value, language)}
                 <X size={13} />
               </button>
-            ))}
-          </div>
-        )}
-        <div className="flex flex-wrap gap-1.5">
+            ))
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-400">-</span>
+          )}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
           {values.filter((value) => !selected.includes(value)).map((value) => (
             <button
               key={value}

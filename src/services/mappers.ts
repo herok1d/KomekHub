@@ -26,6 +26,7 @@ type OpportunityRow = {
   requirements: string | null;
   benefits: string | null;
   volunteer_hours: number | null;
+  min_age?: number | null;
   certificate_available: boolean | null;
   status?: string | null;
   created_at: string | null;
@@ -54,7 +55,7 @@ export function mapOrganizationRowToOrganization(row: OrganizationRow): Organiza
     logoUrl: row.logo_url || undefined,
     rating: 0,
     reviews: 0,
-    city: row.city || 'Online',
+    city: row.city || 'Kazakhstan',
     contactEmail: row.contact_email || undefined,
     phone: row.phone || undefined,
     website: row.website || undefined,
@@ -73,7 +74,7 @@ export function mapOpportunityRowToOpportunity(row: OpportunityRow): Opportunity
     title: text(row.title),
     organization: organization?.name || 'KomekHub organization',
     organizationLogo: organization?.logo_url || undefined,
-    city: row.city,
+    city: row.city === 'Online' ? 'Kazakhstan' : row.city,
     format: row.format as Opportunity['format'],
     duration: text(row.schedule || 'Flexible'),
     category: row.category,
@@ -87,6 +88,7 @@ export function mapOpportunityRowToOpportunity(row: OpportunityRow): Opportunity
     badges: certificate ? [...new Set([...badges, 'Certificate'])] : badges,
     languages,
     volunteerHours: row.volunteer_hours ?? 0,
+    minAge: row.min_age ?? undefined,
     certificate,
     status: (row.status || 'recruiting') as Opportunity['status'],
     applicationCount: row.applications?.[0]?.count ?? 0,

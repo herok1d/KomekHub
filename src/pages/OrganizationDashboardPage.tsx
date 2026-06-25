@@ -272,6 +272,7 @@ export function OrganizationDashboardPage({
                   <div className="flex flex-wrap gap-2 text-xs font-extrabold text-slate-500">
                     <span className="rounded-full bg-slate-100 px-3 py-1">{labelFor(opportunity.category, language)}</span>
                     <span className="rounded-full bg-skysoft px-3 py-1 text-ocean">{labelFor(opportunity.format, language)}</span>
+                    {opportunity.minAge && <span className="rounded-full bg-slate-100 px-3 py-1">{opportunity.minAge}+</span>}
                     {opportunity.certificate && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">{t('certificateAvailable')}</span>}
                   </div>
                   <h3 className="mt-3 text-xl font-extrabold">{localize(opportunity.title)}</h3>
@@ -404,6 +405,7 @@ function OpportunityEditor({ language, organizationId, opportunity, onCancel, on
           <Select label={t('category')} value={form.category} values={categories.map((item) => item.name)} language={language} onChange={(value) => update('category', value)} />
           <Select label={t('format')} value={form.format} values={formFormats} language={language} onChange={(value) => update('format', value)} />
           <Select label={t('schedule')} value={form.schedule} values={formSchedules} language={language} onChange={(value) => update('schedule', value)} />
+          <Select label={t('ageRequirement')} value={form.minAge ? `${form.minAge}+` : 'No restriction'} values={['No restriction', '14+', '16+', '18+', '21+']} language={language} onChange={(value) => update('minAge', value === 'No restriction' ? null : Number(value.replace('+', '')))} />
           <Select label={t('status')} value={form.status} values={['recruiting', 'closed', 'in_progress', 'completed']} language={language} onChange={(value) => update('status', value as OpportunityStatus)} />
           <Input label={t('volunteerHours')} value={String(form.volunteerHours)} onChange={(value) => update('volunteerHours', Number(value))} type="number" required />
           <Input label={t('languages')} value={form.languages.join(', ')} onChange={(value) => update('languages', parseList(value))} placeholder={t('commaSeparatedPlaceholder')} />
@@ -518,6 +520,7 @@ function opportunityToInput(opportunity: Opportunity | undefined, localize: (val
     requirements: opportunity?.requirements[0] ? localize(opportunity.requirements[0]) : '',
     benefits: opportunity?.benefits[0] ? localize(opportunity.benefits[0]) : '',
     volunteerHours: opportunity?.volunteerHours ?? 0,
+    minAge: opportunity?.minAge ?? null,
     certificateAvailable: opportunity?.certificate ?? false,
     status: opportunity?.status ?? 'recruiting',
   };

@@ -42,6 +42,7 @@ export function DetailPage({
   const activeApplication = application && application.status !== 'cancelled' ? application : undefined;
   const canWithdraw = activeApplication?.status === 'pending';
   const applyDisabled = Boolean(activeApplication && !canWithdraw) || (!canWithdraw && !canApply);
+  const locationLabel = opportunity.format === 'Online' ? labelFor('Online', language) : labelFor(opportunity.city, language);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -51,6 +52,7 @@ export function DetailPage({
             {badges.map((badge) => (
               <Badge key={badge} label={badge} language={language} />
             ))}
+            {opportunity.minAge && <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-extrabold text-slate-600">{opportunity.minAge}+</span>}
             <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${canApply ? 'bg-mint text-leaf' : 'bg-slate-100 text-slate-600'}`}>
               {t(opportunity.status)}
             </span>
@@ -63,7 +65,7 @@ export function DetailPage({
             </button>
             <span className="flex items-center gap-1.5">
               <MapPin size={17} />
-              {labelFor(opportunity.city, language)}
+              {locationLabel}
             </span>
             <span className="flex items-center gap-1.5">
               <CalendarDays size={17} />
@@ -77,6 +79,7 @@ export function DetailPage({
           <p className="mt-8 text-lg leading-8 text-slate-700">{localize(opportunity.longDescription)}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Pill label={`${opportunity.volunteerHours} ${t('volunteerHours')}`} strong />
+            {opportunity.minAge && <Pill label={`${t('minimumAge')}: ${opportunity.minAge}+`} strong />}
             {opportunity.certificate && <Pill label={t('certificateAvailable')} strong />}
             {tags.map((tag) => (
               <Pill key={tag} label={tag} language={language} />

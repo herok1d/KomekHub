@@ -51,6 +51,7 @@ function opportunityPayload(organizationId: string, input: OpportunityInput) {
     requirements: input.requirements.trim() || null,
     benefits: input.benefits.trim() || null,
     volunteer_hours: input.volunteerHours,
+    min_age: input.minAge ?? null,
     certificate_available: input.certificateAvailable,
     status: input.status,
     updated_at: new Date().toISOString(),

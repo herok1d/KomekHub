@@ -14,7 +14,7 @@ export const categories: Category[] = [
 ];
 
 // Creation-form suggestions only. Search filters are derived from Supabase rows.
-export const formCities = ['Astana', 'Almaty', 'Shymkent', 'Karaganda', 'Aktobe', 'Atyrau', 'Pavlodar', 'Semey', 'Kostanay', 'Kyzylorda', 'Online'];
+export const formCities = ['Astana', 'Almaty', 'Shymkent', 'Karaganda', 'Aktobe', 'Atyrau', 'Pavlodar', 'Semey', 'Kostanay', 'Kyzylorda', 'Kazakhstan'];
 export const formFormats = ['Offline', 'Online', 'Hybrid'];
 export const formSchedules = ['Few hours', 'Weekend', 'Part-time', 'Project', 'Flexible'];
 
@@ -24,6 +24,7 @@ export const initialFilters: Filters = {
   category: 'All categories',
   format: 'All formats',
   schedule: 'Any schedule',
+  age: 'Any age',
   language: 'Any language',
   languages: [],
   badge: 'Any badge',

@@ -1,9 +1,10 @@
 ﻿import { BriefcaseBusiness, ExternalLink, Mail, MapPin, Phone, Star, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
 import { Application, Language, Opportunity, Organization, Page, UserRole } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
-import { EmptyState, SectionHeader } from '../components/ui';
+import { EmptyState, SearchInput, SectionHeader } from '../components/ui';
 
 export function OrganizationPage({
   language,
@@ -35,22 +36,51 @@ export function OrganizationPage({
   onWithdraw: (id: string) => void;
 }) {
   const { t, localize } = useI18n(language);
-  const selected = organizations.find((organization) => organization.id === selectedOrganizationId) ?? organizations[0];
+  const [search, setSearch] = useState('');
+  const filteredOrganizations = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return organizations;
+    return organizations.filter((organization) => {
+      const searchable = [
+        organization.name,
+        organization.city,
+        labelFor(organization.city, language),
+        localize(organization.description),
+      ].join(' ').toLowerCase();
+      return searchable.includes(query);
+    });
+  }, [language, localize, organizations, search]);
+  const selected = filteredOrganizations.find((organization) => organization.id === selectedOrganizationId) ?? filteredOrganizations[0];
   const published = selected ? opportunities.filter((item) => item.organizationId === selected.id || item.organization === selected.name) : [];
   const openCount = published.filter((item) => item.status === 'recruiting').length;
   const applicationCount = published.reduce((sum, item) => sum + item.applicationCount, 0);
 
-  if (!selected) {
+  if (organizations.length === 0) {
     return <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8"><EmptyState title={t('organizationsTitle')} text={t('noOrganizationsYet')} /></main>;
+  }
+
+  if (!selected) {
+    return (
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <SectionHeader eyebrow={t('navOrganizations')} title={t('organizationsTitle')} />
+        <div className="mb-5 max-w-2xl">
+          <SearchInput value={search} onChange={setSearch} placeholder={t('organizationSearchPlaceholder')} />
+        </div>
+        <EmptyState title={t('noOrganizationsFound')} text={t('organizationSearchPlaceholder')} />
+      </main>
+    );
   }
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <SectionHeader eyebrow={t('navOrganizations')} title={t('organizationsTitle')} />
+      <div className="mb-5 max-w-2xl">
+        <SearchInput value={search} onChange={setSearch} placeholder={t('organizationSearchPlaceholder')} />
+      </div>
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <aside className="h-fit rounded-[2rem] border border-slate-200 bg-white p-4 shadow-soft">
           <div className="grid gap-3">
-            {organizations.map((organization) => {
+            {filteredOrganizations.map((organization) => {
               const active = organization.id === selected.id;
               const count = opportunities.filter((item) => item.organizationId === organization.id || item.organization === organization.name).length;
               return (

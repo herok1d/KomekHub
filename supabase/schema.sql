@@ -82,6 +82,7 @@ create table if not exists public.opportunities (
   requirements text,
   benefits text,
   volunteer_hours integer not null default 0,
+  min_age integer check (min_age is null or (min_age >= 0 and min_age <= 120)),
   certificate_available boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

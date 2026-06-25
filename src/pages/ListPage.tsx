@@ -70,6 +70,7 @@ export function ListPage({
               category: t('category'),
               format: t('format'),
               schedule: t('schedule'),
+              age: t('ageRequirement'),
               language: t('language'),
               badge: t('badge'),
               searchButton: t('applyFilters'),
