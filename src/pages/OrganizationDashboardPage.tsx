@@ -72,11 +72,11 @@ export function OrganizationDashboardPage({
       setApplications(ownedApplications);
       setSelectedOpportunityId((current) => current || ownedOpportunities[0]?.id || '');
     } catch (dashboardError) {
-      setError(dashboardError instanceof Error ? dashboardError.message : language === 'ru' ? 'Не удалось загрузить панель организации' : 'Failed to load organization dashboard');
+      setError(dashboardError instanceof Error ? dashboardError.message : t('dashboardLoadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [language, profile?.role, userId]);
+  }, [profile?.role, t, userId]);
 
   useEffect(() => {
     loadDashboard();

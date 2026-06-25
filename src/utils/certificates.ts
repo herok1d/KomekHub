@@ -2,8 +2,45 @@ import jsPDF from 'jspdf';
 import { Certificate, Language } from '../types';
 import { labelFor } from '../i18n/labels';
 
+const certificateCopy = {
+  en: {
+    title: 'KomekHub Certificate of Volunteering',
+    certifies: 'This certifies that',
+    completed: 'has successfully completed the volunteering activity:',
+    organization: 'Organization',
+    city: 'City',
+    hours: 'Volunteer hours',
+    issued: 'Issued date',
+    id: 'Certificate ID',
+    verified: 'Verified through KomekHub',
+  },
+  ru: {
+    title: 'Сертификат волонтёрства KomekHub',
+    certifies: 'Настоящим подтверждается, что',
+    completed: 'успешно принял(а) участие в волонтёрской активности:',
+    organization: 'Организация',
+    city: 'Город',
+    hours: 'Количество часов',
+    issued: 'Дата выдачи',
+    id: 'ID сертификата',
+    verified: 'Подтверждено через KomekHub',
+  },
+  kk: {
+    title: 'KomekHub волонтёрлік сертификаты',
+    certifies: 'Осы арқылы расталады:',
+    completed: 'мына волонтёрлік белсенділікті сәтті аяқтады:',
+    organization: 'Ұйым',
+    city: 'Қала',
+    hours: 'Волонтёрлік сағаттар',
+    issued: 'Берілген күні',
+    id: 'Сертификат ID',
+    verified: 'KomekHub арқылы расталды',
+  },
+} satisfies Record<Language, Record<string, string>>;
+
 export function formatDate(value: string, language: Language) {
-  return new Intl.DateTimeFormat(language === 'ru' ? 'ru-KZ' : 'en-KZ', {
+  const locale = language === 'ru' ? 'ru-KZ' : language === 'kk' ? 'kk-KZ' : 'en-KZ';
+  return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -12,25 +49,14 @@ export function formatDate(value: string, language: Language) {
 
 export async function downloadCertificatePdf(certificate: Certificate, language: Language) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-  const title = language === 'ru' ? 'Сертификат волонтёрства KomekHub' : 'KomekHub Certificate of Volunteering';
-  const certifies = language === 'ru' ? 'Настоящим подтверждается, что' : 'This certifies that';
-  const completed =
-    language === 'ru'
-      ? 'успешно принял(а) участие в волонтёрской активности:'
-      : 'has successfully completed the volunteering activity:';
-  const organization = language === 'ru' ? 'Организация' : 'Organization';
-  const city = language === 'ru' ? 'Город' : 'City';
-  const hours = language === 'ru' ? 'Количество часов' : 'Volunteer hours';
-  const issued = language === 'ru' ? 'Дата выдачи' : 'Issued date';
-  const id = language === 'ru' ? 'ID сертификата' : 'Certificate ID';
-  const verified = language === 'ru' ? 'Подтверждено через KomekHub' : 'Verified through KomekHub';
-
+  const copy = certificateCopy[language];
+  const opportunityTitle = certificate.opportunityTitle[language] || certificate.opportunityTitle.en;
   const rows = [
-    `${organization}: ${certificate.organizationName}`,
-    `${city}: ${labelFor(certificate.city, language)}`,
-    `${hours}: ${certificate.volunteerHours}`,
-    `${issued}: ${formatDate(certificate.issuedAt, language)}`,
-    `${id}: ${certificate.certificateNumber}`,
+    `${copy.organization}: ${certificate.organizationName}`,
+    `${copy.city}: ${labelFor(certificate.city, language)}`,
+    `${copy.hours}: ${certificate.volunteerHours}`,
+    `${copy.issued}: ${formatDate(certificate.issuedAt, language)}`,
+    `${copy.id}: ${certificate.certificateNumber}`,
   ];
   const element = document.createElement('div');
   element.style.width = '842px';
@@ -46,15 +72,15 @@ export async function downloadCertificatePdf(certificate: Certificate, language:
         <img src="/logo-icon.png" style="width:48px;height:48px;object-fit:contain;border-radius:12px;" />
         <div style="font-size:28px;font-weight:800;letter-spacing:-0.02em;">Komek<span style="color:#2f80ed;">Hub</span></div>
       </div>
-      <h1 style="font-size:30px;line-height:1.2;margin:0 0 34px;font-weight:800;">${title}</h1>
-      <p style="font-size:17px;margin:0 0 14px;">${certifies}</p>
+      <h1 style="font-size:30px;line-height:1.2;margin:0 0 34px;font-weight:800;">${copy.title}</h1>
+      <p style="font-size:17px;margin:0 0 14px;">${copy.certifies}</p>
       <div style="font-size:34px;font-weight:800;margin-bottom:22px;">${certificate.volunteerName}</div>
-      <p style="font-size:16px;margin:0 0 12px;">${completed}</p>
-      <div style="font-size:22px;font-weight:800;margin:0 auto 30px;max-width:650px;line-height:1.3;">${certificate.opportunityTitle[language]}</div>
+      <p style="font-size:16px;margin:0 0 12px;">${copy.completed}</p>
+      <div style="font-size:22px;font-weight:800;margin:0 auto 30px;max-width:650px;line-height:1.3;">${opportunityTitle}</div>
       <div style="display:grid;gap:10px;font-size:15px;line-height:1.35;">
         ${rows.map((row) => `<div>${row}</div>`).join('')}
       </div>
-      <div style="margin-top:34px;color:#2f80ed;font-size:16px;font-weight:800;">${verified}</div>
+      <div style="margin-top:34px;color:#2f80ed;font-size:16px;font-weight:800;">${copy.verified}</div>
     </div>
   `;
   element.style.position = 'fixed';

@@ -7,7 +7,7 @@ import { formatDate } from '../utils/certificates';
 import { getCertificateByNumber } from '../services/certificateService';
 
 export function VerifyCertificatePage({ language, initialNumber }: { language: Language; initialNumber?: string }) {
-  const { t } = useI18n(language);
+  const { t, localize } = useI18n(language);
   const [query, setQuery] = useState(initialNumber ?? '');
   const [submitted, setSubmitted] = useState(initialNumber ?? '');
   const [certificate, setCertificate] = useState<Certificate | null>(null);
@@ -77,7 +77,7 @@ export function VerifyCertificatePage({ language, initialNumber }: { language: L
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <VerifyRow label={t('applicant')} value={certificate.volunteerName} />
                 <VerifyRow label={t('certificateNumber')} value={certificate.certificateNumber} />
-                <VerifyRow label={t('title')} value={certificate.opportunityTitle[language]} />
+                <VerifyRow label={t('title')} value={localize(certificate.opportunityTitle)} />
                 <VerifyRow label={t('aboutOrganization')} value={certificate.organizationName} />
                 <VerifyRow label={t('city')} value={labelFor(certificate.city, language)} />
                 <VerifyRow label={t('volunteerHours')} value={String(certificate.volunteerHours)} />

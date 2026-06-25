@@ -1,4 +1,4 @@
-export type Language = 'en' | 'ru';
+export type Language = 'en' | 'ru' | 'kk';
 export type Page = 'home' | 'list' | 'detail' | 'profile' | 'organization' | 'dashboard' | 'post' | 'verify' | 'sign-in' | 'sign-up';
 export type UserRole = 'volunteer' | 'organization';
 export type Format = 'Offline' | 'Online' | 'Hybrid';
@@ -12,6 +12,7 @@ export type VolunteerResponseStatus = 'pending' | 'accepted' | 'declined';
 export type LocalizedText = {
   en: string;
   ru: string;
+  kk?: string;
 };
 
 export type Filters = {

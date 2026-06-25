@@ -397,7 +397,7 @@ function KomekHubApp() {
   }
 
   return (
-    <div className={`min-h-screen bg-mist text-ink ${language === 'ru' ? 'ru-copy' : ''}`}>
+    <div className={`min-h-screen bg-mist text-ink ${language !== 'en' ? 'ru-copy' : ''}`}>
       <Navbar
         activePage={page}
         language={language}
@@ -415,12 +415,12 @@ function KomekHubApp() {
 
       {(isLoadingData || authLoading || isLoadingUserActions) && (
         <DataState
-          title={language === 'ru' ? 'Загрузка данных Supabase' : 'Loading Supabase data'}
-          text={language === 'ru' ? 'Загружаем возможности и организации из базы KomekHub.' : 'Fetching opportunities and organizations from your KomekHub database.'}
+          title={t('loadingSupabaseData')}
+          text={t('loadingSupabaseDataText')}
         />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && dataError && (
-        <DataState title={language === 'ru' ? 'Не удалось загрузить данные Supabase' : 'Supabase data could not be loaded'} text={dataError} />
+        <DataState title={t('supabaseDataLoadFailed')} text={dataError} />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'home' && (
         <HomePage

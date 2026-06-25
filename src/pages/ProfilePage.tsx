@@ -190,7 +190,7 @@ export function ProfilePage({
                   className="grid w-full gap-3 border-b border-slate-100 px-5 py-5 text-left transition-colors last:border-b-0 hover:bg-slate-50 sm:grid-cols-[1fr_auto] sm:items-center"
                 >
                   <span>
-                    <span className="block text-base font-extrabold">{opportunity?.title[language] || t('opportunityUnavailable')}</span>
+                    <span className="block text-base font-extrabold">{opportunity ? localize(opportunity.title) : t('opportunityUnavailable')}</span>
                     <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-slate-500">
                       <span className="flex items-center gap-1.5"><Building2 size={15} />{application.organizationName}</span>
                       <span className="flex items-center gap-1.5"><CalendarDays size={15} />{formatDate(application.appliedAt, language)}</span>
@@ -229,7 +229,7 @@ export function ProfilePage({
                       <Award size={18} />
                       {t('certificateIssued')}
                     </div>
-                    <h3 className="text-xl font-extrabold">{certificate.opportunityTitle[language]}</h3>
+                    <h3 className="text-xl font-extrabold">{localize(certificate.opportunityTitle)}</h3>
                     <p className="mt-1 text-sm font-semibold text-slate-500">{certificate.organizationName}</p>
                     <div className="mt-3 flex flex-wrap gap-2 text-sm">
                       <Pill label={`${certificate.volunteerHours} ${t('volunteerHours')}`} strong />
