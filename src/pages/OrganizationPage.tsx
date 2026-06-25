@@ -13,6 +13,7 @@ export function OrganizationPage({
   savedIds,
   selectedOrganizationId,
   userRole,
+  currentUserId,
   onNavigate,
   onOpenOrganization,
   onOpenOpportunity,
@@ -27,6 +28,7 @@ export function OrganizationPage({
   savedIds: string[];
   selectedOrganizationId?: string;
   userRole?: UserRole;
+  currentUserId?: string;
   onNavigate: (page: Page) => void;
   onOpenOrganization: (id?: string) => void;
   onOpenOpportunity: (id: string) => void;
@@ -54,6 +56,7 @@ export function OrganizationPage({
   const published = selected ? opportunities.filter((item) => item.organizationId === selected.id || item.organization === selected.name) : [];
   const openCount = published.filter((item) => item.status === 'recruiting').length;
   const applicationCount = published.reduce((sum, item) => sum + item.applicationCount, 0);
+  const canPostForSelectedOrganization = userRole === 'organization' && Boolean(currentUserId) && selected?.ownerId === currentUserId;
 
   if (organizations.length === 0) {
     return <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8"><EmptyState title={t('organizationsTitle')} text={t('noOrganizationsYet')} /></main>;
@@ -120,7 +123,7 @@ export function OrganizationPage({
                   </div>
                 </div>
               </div>
-              {userRole === 'organization' && (
+              {canPostForSelectedOrganization && (
                 <button onClick={() => onNavigate('post')} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-slate-800">
                   <BriefcaseBusiness size={18} />{t('postOpportunity')}
                 </button>

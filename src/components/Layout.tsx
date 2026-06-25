@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Award, Bell, ChevronDown, Globe2, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserCircle, X } from 'lucide-react';
+import { Award, Bell, ChevronDown, Globe2, Instagram, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserCircle, X } from 'lucide-react';
 import { Language, Notification, Page, UserRole } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { classNames } from '../utils/classNames';
@@ -346,6 +346,10 @@ export function Footer({ language, onNavigate, userRole }: { language: Language;
             </span>
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">{t('footerText')}</p>
+          <div className="mt-5 flex items-center gap-2">
+            <SocialLink href="https://instagram.com/komekhub" label="KomekHub Instagram" icon={<Instagram size={17} />} />
+            <SocialLink href="https://t.me/komekhub" label="KomekHub Telegram" icon={<TelegramIcon />} />
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <FooterGroup title={t('product')} items={[{ label: t('navHome'), page: 'home' }, { label: t('navOpportunities'), page: 'list' }]} onNavigate={onNavigate} />
@@ -354,6 +358,28 @@ export function Footer({ language, onNavigate, userRole }: { language: Language;
         </div>
       </div>
     </footer>
+  );
+}
+
+function SocialLink({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:border-ocean/40 hover:bg-skysoft hover:text-ocean"
+    >
+      {icon}
+    </a>
+  );
+}
+
+function TelegramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[17px] w-[17px]" fill="currentColor">
+      <path d="M20.7 4.4c.4-.2.9.2.8.7l-2.7 14c-.1.6-.8.8-1.3.5l-4.3-3.2-2.1 2c-.4.4-1 .2-1-.4l.1-3.5 6.5-6.1c.3-.3-.1-.7-.4-.5l-8.1 5.2-3.5-1.1c-.6-.2-.6-1 0-1.3l15-6.3Z" />
+    </svg>
   );
 }
 

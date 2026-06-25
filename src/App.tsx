@@ -499,6 +499,7 @@ function KomekHubApp() {
           onNavigate={navigate}
           selectedOrganizationId={selectedOrganizationId}
           userRole={profile?.role}
+          currentUserId={user?.id}
           onOpenOrganization={openOrganization}
           onOpenOpportunity={openOpportunity}
           onApply={apply}

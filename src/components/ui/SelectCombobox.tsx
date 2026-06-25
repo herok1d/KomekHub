@@ -15,6 +15,7 @@ export function SelectCombobox({
   placeholder,
   icon,
   disabled,
+  labelClassName,
 }: {
   label: string;
   value: string;
@@ -23,6 +24,7 @@ export function SelectCombobox({
   placeholder?: string;
   icon?: ReactNode;
   disabled?: boolean;
+  labelClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(Math.max(0, options.findIndex((option) => option.value === value)));
@@ -68,7 +70,7 @@ export function SelectCombobox({
 
   return (
     <div ref={wrapperRef} className="relative min-w-[170px]">
-      <span className="mb-1.5 block text-[13px] font-extrabold uppercase tracking-wide text-slate-500">{label}</span>
+      <span className={labelClassName ?? 'mb-1.5 block text-[13px] font-extrabold uppercase tracking-wide text-slate-500'}>{label}</span>
       <button
         type="button"
         disabled={disabled}

@@ -4,6 +4,8 @@ import { FilterOptions, Filters, Language } from '../types';
 import { SearchInput } from './ui';
 import { SelectCombobox } from './ui/SelectCombobox';
 
+const filterLabelClass = 'mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500';
+
 export function SearchPanel({
   filters,
   setFilters,
@@ -43,12 +45,12 @@ export function SearchPanel({
     <div className="grid gap-3">
       <SearchInput value={filters.query} placeholder={labels.searchPlaceholder} onChange={(query) => setFilters({ ...filters, query })} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <SelectCombobox label={labels.city} value={filters.city} options={toOptions(options.cities)} onChange={(city) => setFilters({ ...filters, city })} />
-        <SelectCombobox label={labels.category} value={filters.category} options={toOptions(options.categories)} onChange={(category) => setFilters({ ...filters, category })} />
-        <SelectCombobox label={labels.format} value={filters.format} options={toOptions(options.formats)} onChange={(format) => setFilters({ ...filters, format })} />
-        <SelectCombobox label={labels.schedule} value={filters.schedule} options={toOptions(options.schedules)} onChange={(schedule) => setFilters({ ...filters, schedule })} />
+        <SelectCombobox label={labels.city} labelClassName={filterLabelClass} value={filters.city} options={toOptions(options.cities)} onChange={(city) => setFilters({ ...filters, city })} />
+        <SelectCombobox label={labels.category} labelClassName={filterLabelClass} value={filters.category} options={toOptions(options.categories)} onChange={(category) => setFilters({ ...filters, category })} />
+        <SelectCombobox label={labels.format} labelClassName={filterLabelClass} value={filters.format} options={toOptions(options.formats)} onChange={(format) => setFilters({ ...filters, format })} />
+        <SelectCombobox label={labels.schedule} labelClassName={filterLabelClass} value={filters.schedule} options={toOptions(options.schedules)} onChange={(schedule) => setFilters({ ...filters, schedule })} />
       </div>
-      <SelectCombobox label={labels.age} value={filters.age} options={toOptions(options.ages)} onChange={(age) => setFilters({ ...filters, age })} />
+      <SelectCombobox label={labels.age} labelClassName={filterLabelClass} value={filters.age} options={toOptions(options.ages)} onChange={(age) => setFilters({ ...filters, age })} />
       <LanguageSelect label={labels.language} values={multiOptions.languages} selected={filters.languages} language={language} onToggle={(value) => toggleListValue('languages', value)} />
       <BadgeSelect label={labels.badge} values={multiOptions.badges} selected={filters.badges} language={language} onToggle={(value) => toggleListValue('badges', value)} />
       {onSearch && (
@@ -67,7 +69,7 @@ export function SearchPanel({
 function LanguageSelect({ label, values, selected, language, onToggle }: { label: string; values: string[]; selected: string[]; language: Language; onToggle: (value: string) => void }) {
   return (
     <div className="grid gap-2">
-      <span className="text-sm font-extrabold text-slate-700">{label}</span>
+      <span className={filterLabelClass}>{label}</span>
       <div className="grid grid-cols-3 gap-2">
         {values.map((value) => {
           const active = selected.includes(value);
@@ -78,7 +80,7 @@ function LanguageSelect({ label, values, selected, language, onToggle }: { label
               onClick={() => onToggle(value)}
               className={`flex h-10 min-w-0 items-center justify-center rounded-xl border px-2 text-center text-xs font-extrabold transition-colors ${
                 active
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  ? 'border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm'
                   : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
               }`}
             >
@@ -94,7 +96,7 @@ function LanguageSelect({ label, values, selected, language, onToggle }: { label
 function BadgeSelect({ label, values, selected, language, onToggle }: { label: string; values: string[]; selected: string[]; language: Language; onToggle: (value: string) => void }) {
   return (
     <div className="grid gap-2">
-      <span className="text-sm font-extrabold text-slate-700">{label}</span>
+      <span className={filterLabelClass}>{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {values.map((value) => {
           const active = selected.includes(value);
