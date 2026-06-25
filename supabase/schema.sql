@@ -11,6 +11,7 @@ create table if not exists public.profiles (
   role text not null default 'volunteer' check (role in ('volunteer', 'organization')),
   city text,
   avatar_url text,
+  birth_date date,
   university text,
   languages text[] not null default '{}',
   skills text[] not null default '{}',
@@ -30,7 +31,7 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (user_id, full_name, role, city)
+  insert into public.profiles (user_id, full_name, role, city, birth_date)
   values (
     new.id,
     coalesce(nullif(new.raw_user_meta_data ->> 'full_name', ''), split_part(new.email, '@', 1)),
@@ -39,7 +40,8 @@ begin
         then new.raw_user_meta_data ->> 'role'
       else 'volunteer'
     end,
-    coalesce(nullif(new.raw_user_meta_data ->> 'city', ''), 'Astana')
+    coalesce(nullif(new.raw_user_meta_data ->> 'city', ''), 'Astana'),
+    nullif(new.raw_user_meta_data ->> 'birth_date', '')::date
   )
   on conflict (user_id) do nothing;
 

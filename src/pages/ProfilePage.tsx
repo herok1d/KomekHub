@@ -28,6 +28,7 @@ import { formatDate } from '../utils/certificates';
 type ProfileFormState = {
   fullName: string;
   city: string;
+  birthDate: string;
   university: string;
   languages: string;
   skills: string;
@@ -84,6 +85,7 @@ export function ProfilePage({
       await updateUserProfile(user.id, {
         fullName: form.fullName,
         city: form.city,
+        birthDate: form.birthDate,
         university: form.university,
         languages: parseList(form.languages),
         skills: parseList(form.skills),
@@ -159,6 +161,11 @@ export function ProfilePage({
               <ProfileEditor form={form} setForm={setForm} onSubmit={handleSubmit} isSaving={isSaving} error={error} language={language} />
             ) : (
               <div className="mt-6 grid gap-6">
+                {profile.role === 'volunteer' && !profile.birthDate && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+                    {t('birthDateReminder')}
+                  </div>
+                )}
                 <ProfileChips icon={<Languages size={18} />} title={t('languages')} items={profile.languages} language={language} emptyText={t('notAddedYet')} />
                 <ProfileChips icon={<Sparkles size={18} />} title={t('interests')} items={profile.interests} language={language} emptyText={t('notAddedYet')} />
                 <ProfileChips icon={<Check size={18} />} title={t('skills')} items={profile.skills} language={language} emptyText={t('notAddedYet')} />
@@ -293,6 +300,7 @@ function ProfileEditor({
       <div className="grid gap-4 sm:grid-cols-2">
         <ProfileInput label={t('fullName')} value={form.fullName} onChange={(value) => setField('fullName', value)} required />
         <ProfileInput label={t('city')} value={form.city} onChange={(value) => setField('city', value)} required />
+        <ProfileInput label={t('birthDate')} value={form.birthDate} onChange={(value) => setField('birthDate', value)} type="date" />
         <ProfileInput label={t('university')} value={form.university} onChange={(value) => setField('university', value)} />
         <ProfileInput label={t('languages')} value={form.languages} onChange={(value) => setField('languages', value)} placeholder={t('commaSeparatedPlaceholder')} />
         <ProfileInput label={t('skills')} value={form.skills} onChange={(value) => setField('skills', value)} placeholder={t('commaSeparatedPlaceholder')} />
@@ -307,11 +315,11 @@ function ProfileEditor({
   );
 }
 
-function ProfileInput({ label, value, onChange, placeholder, required }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; required?: boolean }) {
+function ProfileInput({ label, value, onChange, placeholder, required, type = 'text' }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; required?: boolean; type?: string }) {
   return (
     <label className="grid gap-2">
       <span className="text-sm font-extrabold text-slate-700">{label}</span>
-      <input required={required} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink shadow-sm focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15" />
+      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink shadow-sm focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15" />
     </label>
   );
 }
@@ -356,6 +364,7 @@ function profileToForm(profile: ReturnType<typeof useAuth>['profile']): ProfileF
   return {
     fullName: profile?.fullName ?? '',
     city: profile?.city ?? '',
+    birthDate: profile?.birthDate ?? '',
     university: profile?.university ?? '',
     languages: profile?.languages.join(', ') ?? '',
     skills: profile?.skills.join(', ') ?? '',

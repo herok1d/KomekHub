@@ -100,6 +100,12 @@ export function OpportunityCard({
           <Users size={17} />
           {opportunity.applicationCount} {t('appliedCount')}
         </span>
+        {opportunity.minAge && (
+          <span className="flex items-center gap-2">
+            <CalendarDays size={17} />
+            {t('ageLabel')}: {opportunity.minAge}+
+          </span>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">

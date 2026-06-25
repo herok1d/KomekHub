@@ -1,4 +1,4 @@
-import { ArrowRight, X } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { labelFor } from '../i18n/labels';
 import { FilterOptions, Filters, Language } from '../types';
 import { SearchInput } from './ui';
@@ -68,31 +68,25 @@ function MultiSelect({ label, values, selected, language, onToggle }: { label: s
   return (
     <div className="grid gap-2">
       <span className="text-sm font-extrabold text-slate-700">{label}</span>
-      <div className="flex min-h-[96px] flex-col rounded-2xl border border-slate-200 bg-white p-3">
-        <div className="flex min-h-8 flex-wrap content-start gap-1.5">
-          {selected.length > 0 ? (
-            selected.map((value) => (
-              <button key={value} type="button" onClick={() => onToggle(value)} className="inline-flex items-center gap-1 rounded-full bg-mint px-2.5 py-1 text-xs font-extrabold text-leaf">
-                {labelFor(value, language)}
-                <X size={13} />
-              </button>
-            ))
-          ) : (
-            <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-400">-</span>
-          )}
-        </div>
-        <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
-          {values.filter((value) => !selected.includes(value)).map((value) => (
+      <div className="flex flex-wrap gap-1.5">
+        {values.map((value) => {
+          const active = selected.includes(value);
+          return (
             <button
               key={value}
               type="button"
               onClick={() => onToggle(value)}
-              className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-extrabold text-slate-600 transition-colors hover:bg-slate-200"
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors ${
+                active
+                  ? 'border-leaf bg-mint text-leaf'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-ocean/40 hover:bg-slate-50'
+              }`}
             >
+              {active && <Check size={13} />}
               {labelFor(value, language)}
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );

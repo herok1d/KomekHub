@@ -9,6 +9,7 @@ export type ProfileRow = {
   role: UserRole;
   city: string | null;
   avatar_url: string | null;
+  birth_date: string | null;
   university: string | null;
   languages: string[] | null;
   skills: string[] | null;
@@ -20,11 +21,13 @@ export type ProfileFallbackData = {
   fullName?: string;
   role?: UserRole;
   city?: string;
+  birthDate?: string;
 };
 
 export type ProfileUpdateInput = {
   fullName: string;
   city: string;
+  birthDate: string;
   university: string;
   languages: string[];
   skills: string[];
@@ -68,6 +71,7 @@ export async function ensureUserProfile(user: User, fallbackData: ProfileFallbac
     full_name: fallbackData.fullName?.trim() || defaultFullName(user),
     role: fallbackData.role ?? 'volunteer',
     city: fallbackData.city?.trim() || 'Astana',
+    birth_date: fallbackData.birthDate || null,
   };
 
   if (import.meta.env.DEV) {
@@ -89,6 +93,7 @@ export async function updateUserProfile(userId: string, input: ProfileUpdateInpu
   const payload = {
     full_name: input.fullName.trim(),
     city: input.city.trim(),
+    birth_date: input.birthDate || null,
     university: input.university.trim() || null,
     languages: input.languages,
     skills: input.skills,

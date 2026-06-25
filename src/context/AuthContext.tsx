@@ -10,6 +10,7 @@ type SignUpInput = {
   password: string;
   role: UserRole;
   city: string;
+  birthDate?: string;
 };
 
 type AuthContextValue = {
@@ -32,6 +33,7 @@ function mapProfile(row: ProfileRow): Profile {
     role: row.role,
     city: row.city || '',
     avatarUrl: row.avatar_url || undefined,
+    birthDate: row.birth_date || undefined,
     university: row.university || undefined,
     languages: row.languages ?? [],
     skills: row.skills ?? [],
@@ -125,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await ensureAndSetProfile(data.user);
   }, [ensureAndSetProfile]);
 
-  const signUp = useCallback(async ({ fullName, email, password, role, city }: SignUpInput) => {
+  const signUp = useCallback(async ({ fullName, email, password, role, city, birthDate }: SignUpInput) => {
     const client = requireSupabase();
     const signUpResult = await client.auth.signUp({
       email,
@@ -135,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: fullName,
           role,
           city,
+          birth_date: birthDate || null,
         },
       },
     });
@@ -157,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       full_name: fullName,
       role,
       city,
+      birth_date: birthDate || null,
     };
 
     if (import.meta.env.DEV) {
@@ -165,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      await ensureAndSetProfile(data.user, { fullName, role, city });
+      await ensureAndSetProfile(data.user, { fullName, role, city, birthDate });
       if (import.meta.env.DEV) console.info('[KomekHub auth] profile upsert error', null);
     } catch (profileError) {
       if (import.meta.env.DEV) console.error('[KomekHub auth] profile upsert error', profileError);

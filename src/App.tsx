@@ -296,6 +296,17 @@ function KomekHubApp() {
       showToast(t(opportunity.status));
       return;
     }
+    if (opportunity?.minAge) {
+      if (!profile?.birthDate) {
+        showToast(t('addBirthDateBeforeApplying'));
+        navigate('profile');
+        return;
+      }
+      if (calculateAge(profile.birthDate) < opportunity.minAge) {
+        showToast(t('ageRestrictedOpportunity').replace('[Age]', String(opportunity.minAge)));
+        return;
+      }
+    }
 
     try {
       const application = await applyToOpportunity(user.id, id);
@@ -519,6 +530,16 @@ function DataState({ title, text }: { title: string; text: string }) {
       <EmptyState title={title} text={text} />
     </main>
   );
+}
+
+function calculateAge(birthDate: string) {
+  const birth = new Date(`${birthDate}T00:00:00`);
+  if (Number.isNaN(birth.getTime())) return 0;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDelta = today.getMonth() - birth.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) age -= 1;
+  return age;
 }
 
 function pageFromPath(pathname: string): Page {

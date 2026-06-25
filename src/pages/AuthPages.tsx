@@ -1,5 +1,5 @@
 import { FormEvent, ReactNode, useState } from 'react';
-import { Building2, LockKeyhole, Mail, MapPin, UserRound } from 'lucide-react';
+import { Building2, CalendarDays, LockKeyhole, Mail, MapPin, UserRound } from 'lucide-react';
 import { formCities } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n/useI18n';
@@ -50,6 +50,7 @@ export function SignUpPage({ language, onNavigate, onSuccess }: { language: Lang
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('volunteer');
   const [city, setCity] = useState('Astana');
+  const [birthDate, setBirthDate] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -58,7 +59,7 @@ export function SignUpPage({ language, onNavigate, onSuccess }: { language: Lang
     setError('');
     setSubmitting(true);
     try {
-      await signUp({ fullName, email, password, role, city });
+      await signUp({ fullName, email, password, role, city, birthDate: role === 'volunteer' ? birthDate : undefined });
       onSuccess();
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : t('authGenericError'));
@@ -73,6 +74,7 @@ export function SignUpPage({ language, onNavigate, onSuccess }: { language: Lang
         <AuthInput icon={<UserRound size={18} />} label={t('fullName')} value={fullName} onChange={setFullName} placeholder="Aigerim Sapar" />
         <AuthInput icon={<Mail size={18} />} label={t('email')} value={email} onChange={setEmail} type="email" placeholder="you@example.com" />
         <AuthInput icon={<LockKeyhole size={18} />} label={t('password')} value={password} onChange={setPassword} type="password" placeholder="••••••••" />
+        {role === 'volunteer' && <AuthInput icon={<CalendarDays size={18} />} label={t('birthDate')} value={birthDate} onChange={setBirthDate} type="date" placeholder="2004-01-15" />}
         <label className="grid gap-2">
           <span className="text-sm font-extrabold text-slate-700">{t('role')}</span>
           <div className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">

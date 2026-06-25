@@ -121,6 +121,7 @@ export type Profile = {
   role: UserRole;
   city: string;
   avatarUrl?: string;
+  birthDate?: string;
   university?: string;
   languages: string[];
   skills: string[];
