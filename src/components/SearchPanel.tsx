@@ -47,10 +47,10 @@ export function SearchPanel({
         <SelectCombobox label={labels.category} value={filters.category} options={toOptions(options.categories)} onChange={(category) => setFilters({ ...filters, category })} />
         <SelectCombobox label={labels.format} value={filters.format} options={toOptions(options.formats)} onChange={(format) => setFilters({ ...filters, format })} />
         <SelectCombobox label={labels.schedule} value={filters.schedule} options={toOptions(options.schedules)} onChange={(schedule) => setFilters({ ...filters, schedule })} />
-        <MultiSelect label={labels.language} values={multiOptions.languages} selected={filters.languages} language={language} onToggle={(value) => toggleListValue('languages', value)} />
-        <MultiSelect label={labels.badge} values={multiOptions.badges} selected={filters.badges} language={language} onToggle={(value) => toggleListValue('badges', value)} />
-        <SelectCombobox label={labels.age} value={filters.age} options={toOptions(options.ages)} onChange={(age) => setFilters({ ...filters, age })} />
       </div>
+      <SelectCombobox label={labels.age} value={filters.age} options={toOptions(options.ages)} onChange={(age) => setFilters({ ...filters, age })} />
+      <LanguageSelect label={labels.language} values={multiOptions.languages} selected={filters.languages} language={language} onToggle={(value) => toggleListValue('languages', value)} />
+      <BadgeSelect label={labels.badge} values={multiOptions.badges} selected={filters.badges} language={language} onToggle={(value) => toggleListValue('badges', value)} />
       {onSearch && (
         <button
           onClick={onSearch}
@@ -64,7 +64,34 @@ export function SearchPanel({
   );
 }
 
-function MultiSelect({ label, values, selected, language, onToggle }: { label: string; values: string[]; selected: string[]; language: Language; onToggle: (value: string) => void }) {
+function LanguageSelect({ label, values, selected, language, onToggle }: { label: string; values: string[]; selected: string[]; language: Language; onToggle: (value: string) => void }) {
+  return (
+    <div className="grid gap-2">
+      <span className="text-sm font-extrabold text-slate-700">{label}</span>
+      <div className="grid grid-cols-3 gap-2">
+        {values.map((value) => {
+          const active = selected.includes(value);
+          return (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onToggle(value)}
+              className={`flex h-10 min-w-0 items-center justify-center rounded-xl border px-2 text-center text-xs font-extrabold transition-colors ${
+                active
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <span className="truncate">{labelFor(value, language)}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function BadgeSelect({ label, values, selected, language, onToggle }: { label: string; values: string[]; selected: string[]; language: Language; onToggle: (value: string) => void }) {
   return (
     <div className="grid gap-2">
       <span className="text-sm font-extrabold text-slate-700">{label}</span>
@@ -76,14 +103,14 @@ function MultiSelect({ label, values, selected, language, onToggle }: { label: s
               key={value}
               type="button"
               onClick={() => onToggle(value)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors ${
+              className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-extrabold transition-colors ${
                 active
-                  ? 'border-leaf bg-mint text-leaf'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-ocean/40 hover:bg-slate-50'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
               }`}
             >
-              {active && <Check size={13} />}
-              {labelFor(value, language)}
+              {active && <Check size={12} />}
+              <span>{labelFor(value, language)}</span>
             </button>
           );
         })}
