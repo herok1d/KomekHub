@@ -34,6 +34,13 @@ export type ProfileUpdateInput = {
   interests: string[];
 };
 
+export class MissingBirthDateColumnError extends Error {
+  constructor() {
+    super('The profiles.birth_date database column is missing.');
+    this.name = 'MissingBirthDateColumnError';
+  }
+}
+
 function requireSupabase() {
   if (!supabase) throw new Error(supabaseConfigError);
   return supabase;
@@ -104,6 +111,9 @@ export async function updateUserProfile(userId: string, input: ProfileUpdateInpu
   const { data, error } = await client.from('profiles').update(payload).eq('user_id', userId).select('*').single();
   if (error) {
     if (import.meta.env.DEV) console.error('[KomekHub profile] Update failed', { userId, payload, error });
+    if (error.message.includes("'birth_date' column") || (error.message.includes('birth_date') && error.message.includes('schema cache'))) {
+      throw new MissingBirthDateColumnError();
+    }
     throw new Error(`Profile update failed: ${error.message}`);
   }
   return data as ProfileRow;

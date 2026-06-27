@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
-import { EmptyState, Toast } from './components/ui';
+import { ConfirmationModal, EmptyState, Toast } from './components/ui';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { categories, initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
@@ -27,6 +27,12 @@ const ALLOWED_BADGES = ['Certificate', 'Flexible schedule', 'No experience neede
 const AGE_OPTIONS = ['Any age', '14+', '16+', '18+', '21+'];
 const NON_CITY_LOCATION_VALUES = new Set(['Online', 'Kazakhstan']);
 
+type ToastState = {
+  message: string;
+  action?: string;
+  onAction?: () => void;
+};
+
 export default function App() {
   return (
     <AuthProvider>
@@ -45,7 +51,9 @@ function KomekHubApp() {
   const [dataError, setDataError] = useState('');
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [pendingWithdrawOpportunityId, setPendingWithdrawOpportunityId] = useState('');
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [certificateToVerify, setCertificateToVerify] = useState('');
   const [language, setLanguage] = useLocalStorageState<Language>('komekhub-language', 'en');
   const [savedIds, setSavedIds] = useState<string[]>([]);
@@ -298,8 +306,13 @@ function KomekHubApp() {
     }
     if (opportunity?.minAge) {
       if (!profile?.birthDate) {
-        showToast(t('addBirthDateBeforeApplying'));
-        navigate('profile');
+        showToast(t('addBirthDateBeforeApplying'), {
+          action: t('goToProfile'),
+          onAction: () => {
+            setToast(null);
+            navigate('profile');
+          },
+        });
         return;
       }
       if (calculateAge(profile.birthDate) < opportunity.minAge) {
@@ -321,15 +334,28 @@ function KomekHubApp() {
     }
   }
 
-  async function withdraw(id: string) {
+  function requestWithdraw(id: string) {
     const application = applicationByOpportunity.get(id);
     if (!application || application.status !== 'pending') return;
+    setPendingWithdrawOpportunityId(id);
+  }
+
+  async function confirmWithdraw() {
+    const application = applicationByOpportunity.get(pendingWithdrawOpportunityId);
+    if (!application || application.status !== 'pending') {
+      setPendingWithdrawOpportunityId('');
+      return;
+    }
+    setIsWithdrawing(true);
     try {
       await withdrawApplication(application.id);
       setApplications((current) => current.map((item) => (item.id === application.id ? { ...item, status: 'cancelled' } : item)));
+      setPendingWithdrawOpportunityId('');
       showToast(t('applicationWithdrawn'));
     } catch (error) {
       showToast(error instanceof Error ? `${t('failedToWithdrawApplication')}: ${error.message}` : t('failedToWithdrawApplication'));
+    } finally {
+      setIsWithdrawing(false);
     }
   }
 
@@ -375,9 +401,9 @@ function KomekHubApp() {
     showToast(t(response === 'accepted' ? 'participationConfirmed' : 'participationDeclined'));
   }
 
-  function showToast(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(''), 2600);
+  function showToast(message: string, options?: Pick<ToastState, 'action' | 'onAction'>) {
+    setToast({ message, ...options });
+    window.setTimeout(() => setToast(null), options?.action ? 5200 : 2600);
   }
 
   function verifyCertificate(certificateNumber: string) {
@@ -437,7 +463,7 @@ function KomekHubApp() {
           appliedIds={appliedIds}
           onSave={toggleSaved}
           applicationByOpportunity={applicationByOpportunity}
-          onWithdraw={withdraw}
+          onWithdraw={requestWithdraw}
         />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'list' && (
@@ -455,7 +481,7 @@ function KomekHubApp() {
           appliedIds={appliedIds}
           applicationByOpportunity={applicationByOpportunity}
           onSave={toggleSaved}
-          onWithdraw={withdraw}
+          onWithdraw={requestWithdraw}
         />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'detail' && selectedOpportunity && (
@@ -469,7 +495,7 @@ function KomekHubApp() {
           onApply={apply}
           onSave={toggleSaved}
           application={applicationByOpportunity.get(selectedOpportunity.id)}
-          onWithdraw={() => withdraw(selectedOpportunity.id)}
+          onWithdraw={() => requestWithdraw(selectedOpportunity.id)}
           onOpenOpportunity={openOpportunity}
           onOpenOrganization={openOrganization}
         />
@@ -486,6 +512,7 @@ function KomekHubApp() {
           onVerifyCertificate={verifyCertificate}
           onApply={apply}
           onSave={toggleSaved}
+          onWithdraw={requestWithdraw}
           onNotify={showToast}
           onVolunteerResponse={respondToApplication}
         />
@@ -505,7 +532,7 @@ function KomekHubApp() {
           onApply={apply}
           onSave={toggleSaved}
           applicationByOpportunity={applicationByOpportunity}
-          onWithdraw={withdraw}
+          onWithdraw={requestWithdraw}
         />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'dashboard' && user && (
@@ -520,7 +547,24 @@ function KomekHubApp() {
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-up' && <SignUpPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
 
       <Footer language={language} onNavigate={navigate} userRole={profile?.role} />
-      {toast && <Toast message={toast} icon={<ShieldCheck className="text-emerald-300" size={20} />} />}
+      <ConfirmationModal
+        open={Boolean(pendingWithdrawOpportunityId)}
+        title={t('withdrawApplicationQuestion')}
+        text={t('withdrawApplicationConfirmation')}
+        confirmLabel={t('withdraw')}
+        cancelLabel={t('cancel')}
+        isConfirming={isWithdrawing}
+        onConfirm={confirmWithdraw}
+        onClose={() => !isWithdrawing && setPendingWithdrawOpportunityId('')}
+      />
+      {toast && (
+        <Toast
+          message={toast.message}
+          action={toast.action}
+          onAction={toast.onAction}
+          icon={<ShieldCheck className="shrink-0 text-emerald-300" size={20} />}
+        />
+      )}
     </div>
   );
 }

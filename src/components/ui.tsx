@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search, X } from 'lucide-react';
 import { labelFor } from '../i18n/labels';
 import { Language } from '../types';
 import { classNames } from '../utils/classNames';
@@ -90,11 +90,68 @@ export function EmptyState({ title, text, action, onAction }: { title: string; t
   );
 }
 
-export function Toast({ message, icon }: { message: string; icon?: ReactNode }) {
+export function Toast({ message, icon, action, onAction }: { message: string; icon?: ReactNode; action?: string; onAction?: () => void }) {
   return (
-    <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-ink px-5 py-4 text-sm font-extrabold text-white shadow-lift">
+    <div className="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 items-center gap-3 rounded-2xl bg-ink px-5 py-4 text-sm font-extrabold text-white shadow-lift">
       {icon}
-      {message}
+      <span className="min-w-0 flex-1">{message}</span>
+      {action && onAction && (
+        <button type="button" onClick={onAction} className="shrink-0 rounded-xl bg-white/12 px-3 py-2 text-xs text-white transition-colors hover:bg-white/20">
+          {action}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function ConfirmationModal({
+  open,
+  title,
+  text,
+  confirmLabel,
+  cancelLabel,
+  isConfirming = false,
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  text: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  isConfirming?: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/45 px-4 backdrop-blur-[2px]" role="presentation" onMouseDown={onClose}>
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-title"
+        className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-lift sm:p-7"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="confirmation-title" className="text-xl font-extrabold text-ink">{title}</h2>
+            <p className="mt-3 text-sm font-medium leading-6 text-slate-600">{text}</p>
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label={cancelLabel}>
+            <X size={19} />
+          </button>
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} disabled={isConfirming} className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-extrabold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60">
+            {cancelLabel}
+          </button>
+          <button type="button" onClick={onConfirm} disabled={isConfirming} className="rounded-2xl bg-rose-600 px-4 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-rose-700 disabled:bg-slate-400">
+            {confirmLabel}
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

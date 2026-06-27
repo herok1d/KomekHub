@@ -18,7 +18,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { labelFor } from '../i18n/labels';
 import { useI18n } from '../i18n/useI18n';
-import { updateUserProfile } from '../services/profileService';
+import { MissingBirthDateColumnError, updateUserProfile } from '../services/profileService';
 import { downloadCertificatePdf } from '../services/certificateService';
 import { Application, Certificate, Language, Opportunity } from '../types';
 import { OpportunityCard } from '../components/OpportunityCard';
@@ -46,6 +46,7 @@ export function ProfilePage({
   onVerifyCertificate,
   onApply,
   onSave,
+  onWithdraw,
   onNotify,
   onVolunteerResponse,
 }: {
@@ -59,6 +60,7 @@ export function ProfilePage({
   onVerifyCertificate: (certificateNumber: string) => void;
   onApply: (id: string) => void;
   onSave: (id: string) => void;
+  onWithdraw: (id: string) => void;
   onNotify: (message: string) => void;
   onVolunteerResponse: (applicationId: string, response: 'accepted' | 'declined') => Promise<void>;
 }) {
@@ -95,7 +97,11 @@ export function ProfilePage({
       setIsEditing(false);
       onNotify(t('profileUpdated'));
     } catch (profileError) {
-      const message = profileError instanceof Error ? profileError.message : t('profileUpdateFailed');
+      const message = profileError instanceof MissingBirthDateColumnError
+        ? t('birthDateDatabaseNotConfigured')
+        : profileError instanceof Error
+          ? profileError.message
+          : t('profileUpdateFailed');
       setError(message);
     } finally {
       setIsSaving(false);
@@ -269,6 +275,7 @@ export function ProfilePage({
                 isSaved
                 application={applications.find((application) => application.opportunityId === item.id)}
                 onToggleSave={() => onSave(item.id)}
+                onWithdraw={() => onWithdraw(item.id)}
               />
             ))}
           </div>

@@ -1,4 +1,4 @@
-import { ArrowRight, Bookmark, BookmarkCheck, Building2, CalendarDays, Clock, Languages, MapPin, Send, Users } from 'lucide-react';
+import { ArrowRight, Bookmark, BookmarkCheck, Building2, CalendarDays, CheckCircle2, Clock, Languages, MapPin, Send, Users } from 'lucide-react';
 import { labelFor } from '../i18n/labels';
 import { Application, Language, Opportunity } from '../types';
 import { useI18n } from '../i18n/useI18n';
@@ -34,6 +34,13 @@ export function OpportunityCard({
   const activeApplication = application && application.status !== 'cancelled' ? application : undefined;
   const canWithdraw = activeApplication?.status === 'pending';
   const applyDisabled = Boolean(activeApplication && !canWithdraw) || (!canWithdraw && !canApply);
+  const applicationLabel = canWithdraw
+    ? t('applicationSubmitted')
+    : activeApplication
+      ? t(activeApplication.status)
+      : canApply
+        ? t('apply')
+        : t(opportunity.status);
   const locationLabel = opportunity.format === 'Online' ? labelFor('Online', language) : labelFor(opportunity.city, language);
 
   return (
@@ -120,11 +127,11 @@ export function OpportunityCard({
           disabled={applyDisabled}
           className={classNames(
             'pressable flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-extrabold text-white transition',
-            applyDisabled ? 'bg-slate-400' : 'bg-leaf hover:bg-emerald-700',
+            applyDisabled ? 'bg-slate-400' : canWithdraw ? 'bg-slate-600 hover:bg-slate-700' : 'bg-leaf hover:bg-emerald-700',
           )}
         >
-          <Send size={17} />
-          {canWithdraw ? t('withdrawApplication') : activeApplication ? t(activeApplication.status) : canApply ? t('apply') : t(opportunity.status)}
+          {activeApplication ? <CheckCircle2 size={17} /> : <Send size={17} />}
+          {applicationLabel}
         </button>
         <button onClick={onOpen} className="pressable flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-base font-extrabold text-ink transition hover:border-ocean hover:text-ocean">
           {t('viewDetails')}

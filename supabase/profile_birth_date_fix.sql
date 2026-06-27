@@ -4,6 +4,9 @@
 alter table public.profiles
   add column if not exists birth_date date;
 
+comment on column public.profiles.birth_date is
+  'Volunteer date of birth used only for age eligibility checks.';
+
 create or replace function public.handle_new_user_profile()
 returns trigger
 language plpgsql
@@ -28,3 +31,5 @@ begin
   return new;
 end;
 $$;
+
+notify pgrst, 'reload schema';

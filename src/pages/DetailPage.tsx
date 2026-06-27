@@ -5,6 +5,7 @@ import { Application, Language, Opportunity, Organization } from '../types';
 import { Badge, Pill, SectionHeader } from '../components/ui';
 import { OpportunityCard } from '../components/OpportunityCard';
 import { detailTags, sortedUniqueBadges } from '../utils/badges';
+import { classNames } from '../utils/classNames';
 
 export function DetailPage({
   language,
@@ -42,6 +43,13 @@ export function DetailPage({
   const activeApplication = application && application.status !== 'cancelled' ? application : undefined;
   const canWithdraw = activeApplication?.status === 'pending';
   const applyDisabled = Boolean(activeApplication && !canWithdraw) || (!canWithdraw && !canApply);
+  const applicationLabel = canWithdraw
+    ? t('applicationSubmitted')
+    : activeApplication
+      ? t(activeApplication.status)
+      : canApply
+        ? t('apply')
+        : t(opportunity.status);
   const locationLabel = opportunity.format === 'Online' ? labelFor('Online', language) : labelFor(opportunity.city, language);
 
   return (
@@ -98,9 +106,12 @@ export function DetailPage({
             <button
               onClick={canWithdraw ? onWithdraw : () => onApply(opportunity.id)}
               disabled={applyDisabled}
-              className="pressable flex w-full items-center justify-center rounded-2xl bg-ocean px-5 py-4 text-base font-extrabold text-white shadow-soft transition hover:bg-blue-600 disabled:bg-slate-400"
+              className={classNames(
+                'pressable flex w-full items-center justify-center rounded-2xl px-5 py-4 text-base font-extrabold text-white shadow-soft transition disabled:bg-slate-400',
+                canWithdraw ? 'bg-slate-600 hover:bg-slate-700' : 'bg-leaf hover:bg-emerald-700',
+              )}
             >
-              {canWithdraw ? t('withdrawApplication') : activeApplication ? t(activeApplication.status) : canApply ? t('applyNow') : t(opportunity.status)}
+              {applicationLabel}
             </button>
             <button
               onClick={() => onSave(opportunity.id)}
