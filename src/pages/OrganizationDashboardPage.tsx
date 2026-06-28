@@ -72,7 +72,8 @@ export function OrganizationDashboardPage({
       setApplications(ownedApplications);
       setSelectedOpportunityId((current) => current || ownedOpportunities[0]?.id || '');
     } catch (dashboardError) {
-      setError(dashboardError instanceof Error ? dashboardError.message : t('dashboardLoadFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Load failed', dashboardError);
+      setError(t('dashboardLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -131,7 +132,8 @@ export function OrganizationDashboardPage({
       await Promise.all([loadDashboard(), onMarketplaceChanged()]);
       onNotify(t('opportunityDeleted'));
     } catch (deleteError) {
-      onNotify(deleteError instanceof Error ? deleteError.message : t('opportunityDeleteFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Delete opportunity failed', { opportunityId, deleteError });
+      onNotify(t('opportunityDeleteFailed'));
     }
   }
 
@@ -174,7 +176,8 @@ export function OrganizationDashboardPage({
       onNotify(t(status === 'completed' && previous?.certificateAvailable ? 'certificateIssued' : previous?.status === 'completed' || status === 'completed' ? 'hoursUpdated' : 'applicationStatusUpdated'));
     } catch (statusError) {
       const message = statusError instanceof Error ? statusError.message : '';
-      onNotify(message.toLowerCase().includes('certificate') ? t('certificateLockedMessage') : message || t('applicationUpdateFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Application status update failed', { applicationId, status, statusError });
+      onNotify(message.toLowerCase().includes('certificate') ? t('certificateLockedMessage') : t('applicationUpdateFailed'));
     }
   }
 
@@ -184,7 +187,8 @@ export function OrganizationDashboardPage({
       await Promise.all([loadDashboard(), onMarketplaceChanged()]);
       onNotify(t('opportunityUpdated'));
     } catch (statusError) {
-      onNotify(statusError instanceof Error ? statusError.message : t('opportunitySaveFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Opportunity status update failed', { opportunityId, status, statusError });
+      onNotify(t('opportunitySaveFailed'));
     }
   }
 
@@ -194,7 +198,8 @@ export function OrganizationDashboardPage({
       await loadDashboard();
       onNotify(t('applicationStatusUpdated'));
     } catch (detailsError) {
-      onNotify(detailsError instanceof Error ? detailsError.message : t('applicationUpdateFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Application details update failed', { applicationId, detailsError });
+      onNotify(t('applicationUpdateFailed'));
     }
   }
 
@@ -204,7 +209,8 @@ export function OrganizationDashboardPage({
       await loadDashboard();
       onNotify(t('certificateIssued'));
     } catch (issueError) {
-      onNotify(issueError instanceof Error ? issueError.message : t('certificateIssueFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Certificate issue failed', { applicationId, issueError });
+      onNotify(t('certificateIssueFailed'));
     }
   }
 
@@ -341,13 +347,13 @@ function ApplicationManager({
           </div>
           <p className="mt-1 font-bold text-ocean">{application.opportunityTitle}</p>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-slate-500">
-            {application.volunteerCity && <span className="flex items-center gap-1.5"><MapPin size={15} />{application.volunteerCity}</span>}
+            {application.volunteerCity && <span className="flex items-center gap-1.5"><MapPin size={15} />{labelFor(application.volunteerCity, language)}</span>}
             <span className="flex items-center gap-1.5"><CalendarDays size={15} />{formatDate(application.appliedAt, language)}</span>
             <span>{t('volunteerResponse')}: {t(application.volunteerResponse)}</span>
           </div>
           {application.message && <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">{application.message}</p>}
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <Input label={t('assignedRole')} value={assignedRole} onChange={setAssignedRole} placeholder="Event registration assistant" />
+            <Input label={t('assignedRole')} value={assignedRole} onChange={setAssignedRole} placeholder={t('assignedRolePlaceholder')} />
             <Input label={t('organizationNote')} value={organizationNote} onChange={setOrganizationNote} placeholder={t('organizationNote')} />
             <button onClick={() => onSaveDetails(application.id, assignedRole, organizationNote)} className="w-fit rounded-2xl border border-slate-200 px-4 py-2 text-sm font-extrabold text-slate-700 hover:border-ocean hover:text-ocean">{t('saveChanges')}</button>
           </div>
@@ -389,7 +395,8 @@ function OpportunityEditor({ language, organizationId, opportunity, onCancel, on
       else await createOpportunity(organizationId, form);
       await onSaved();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : t('opportunitySaveFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Opportunity save failed', submitError);
+      setError(t('opportunitySaveFailed'));
     } finally {
       setSaving(false);
     }
@@ -397,7 +404,7 @@ function OpportunityEditor({ language, organizationId, opportunity, onCancel, on
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <DashboardHeader title={t(opportunity ? 'editOpportunity' : 'createOpportunity')} action={t('cancel')} onAction={onCancel} />
+      <DashboardHeader title={t(opportunity ? 'editOpportunity' : 'createOpportunity')} action={t('cancel')} actionIcon={<X size={16} />} onAction={onCancel} />
       <form onSubmit={submit} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
         <div className="grid gap-5 md:grid-cols-2">
           <Input label={t('title')} value={form.title} onChange={(value) => update('title', value)} required />
@@ -447,7 +454,8 @@ function OrganizationSetupForm({ language, organization, userId, onCancel, onSav
       const saved = organization?.id ? await updateOrganization(organization.id, form) : await createOrganization(userId, form);
       await onSaved(saved);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : t('organizationProfileSaveFailed'));
+      if (import.meta.env.DEV) console.error('[KomekHub dashboard] Organization profile save failed', submitError);
+      setError(t('organizationProfileSaveFailed'));
     } finally {
       setSaving(false);
     }
@@ -478,8 +486,8 @@ function OrganizationSetupForm({ language, organization, userId, onCancel, onSav
   );
 }
 
-function DashboardHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
-  return <div className="mb-5 flex items-center justify-between gap-4"><h2 className="text-2xl font-extrabold tracking-tight">{title}</h2>{action && <button onClick={onAction} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean"><Plus size={16} />{action}</button>}</div>;
+function DashboardHeader({ title, action, onAction, actionIcon }: { title: string; action?: string; onAction?: () => void; actionIcon?: React.ReactNode }) {
+  return <div className="mb-5 flex flex-wrap items-center justify-between gap-4"><h2 className="min-w-0 text-2xl font-extrabold tracking-tight">{title}</h2>{action && <button type="button" onClick={onAction} className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean">{actionIcon ?? <Plus size={16} />}{action}</button>}</div>;
 }
 
 function DashboardMetric({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {

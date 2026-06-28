@@ -27,8 +27,9 @@ export function VerifyCertificatePage({ language, initialNumber }: { language: L
     try {
       setCertificate(await getCertificateByNumber(value));
     } catch (verifyError) {
+      if (import.meta.env.DEV) console.error('[KomekHub certificates] Verification failed', { value, verifyError });
       setCertificate(null);
-      setError(verifyError instanceof Error ? verifyError.message : t('certificateVerificationFailed'));
+      setError(t('certificateVerificationFailed'));
     } finally {
       setLoading(false);
     }

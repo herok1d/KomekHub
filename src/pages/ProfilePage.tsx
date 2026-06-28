@@ -68,6 +68,7 @@ export function ProfilePage({
   const { user, profile, refreshProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [downloadingCertificateId, setDownloadingCertificateId] = useState('');
   const [error, setError] = useState('');
   const [form, setForm] = useState<ProfileFormState>(() => profileToForm(profile));
 
@@ -99,9 +100,8 @@ export function ProfilePage({
     } catch (profileError) {
       const message = profileError instanceof MissingBirthDateColumnError
         ? t('birthDateDatabaseNotConfigured')
-        : profileError instanceof Error
-          ? profileError.message
-          : t('profileUpdateFailed');
+        : t('profileUpdateFailed');
+      if (import.meta.env.DEV) console.error('[KomekHub profile] Update failed', profileError);
       setError(message);
     } finally {
       setIsSaving(false);
@@ -109,6 +109,18 @@ export function ProfilePage({
   }
 
   if (!profile) return null;
+
+  async function handleCertificateDownload(certificate: Certificate) {
+    setDownloadingCertificateId(certificate.id);
+    try {
+      await downloadCertificatePdf(certificate, language);
+    } catch (downloadError) {
+      if (import.meta.env.DEV) console.error('[KomekHub certificates] PDF download failed', { certificateId: certificate.id, downloadError });
+      onNotify(t('certificateDownloadFailed'));
+    } finally {
+      setDownloadingCertificateId('');
+    }
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -190,33 +202,38 @@ export function ProfilePage({
             {applications.map((application) => {
               const opportunity = opportunities.find((item) => item.id === application.opportunityId);
               return (
-                <button
+                <div
                   key={application.id}
-                  onClick={() => opportunity && onOpenOpportunity(opportunity.id)}
                   className="grid w-full gap-3 border-b border-slate-100 px-5 py-5 text-left transition-colors last:border-b-0 hover:bg-slate-50 sm:grid-cols-[1fr_auto] sm:items-center"
                 >
-                  <span>
-                    <span className="block text-base font-extrabold">{opportunity ? localize(opportunity.title) : t('opportunityUnavailable')}</span>
-                    <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-slate-500">
+                  <div className="min-w-0">
+                    {opportunity ? (
+                      <button type="button" onClick={() => onOpenOpportunity(opportunity.id)} className="block text-left text-base font-extrabold text-ink transition-colors hover:text-ocean">
+                        {localize(opportunity.title)}
+                      </button>
+                    ) : (
+                      <p className="text-base font-extrabold">{t('opportunityUnavailable')}</p>
+                    )}
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-slate-500">
                       <span className="flex items-center gap-1.5"><Building2 size={15} />{application.organizationName}</span>
                       <span className="flex items-center gap-1.5"><CalendarDays size={15} />{formatDate(application.appliedAt, language)}</span>
                       {application.status === 'completed' && <span>{application.volunteerHours} {t('volunteerHours')}</span>}
-                    </span>
-                  </span>
+                    </div>
+                  </div>
                   <StatusPill status={application.status} label={t(application.status)} />
                   {application.status === 'accepted' && application.volunteerResponse === 'pending' && (
-                    <div className="mt-3 rounded-2xl bg-skysoft p-4">
+                    <div className="rounded-2xl bg-skysoft p-4 sm:col-span-2">
                       <p className="text-sm font-bold text-ocean">{t('acceptedConfirmPrompt').replace('[Opportunity title]', opportunity ? localize(opportunity.title) : '')}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <button onClick={(event) => { event.stopPropagation(); onVolunteerResponse(application.id, 'accepted'); }} className="rounded-xl bg-leaf px-4 py-2 text-sm font-extrabold text-white">{t('confirmParticipation')}</button>
-                        <button onClick={(event) => { event.stopPropagation(); onVolunteerResponse(application.id, 'declined'); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700">{t('declineParticipation')}</button>
+                        <button type="button" onClick={() => onVolunteerResponse(application.id, 'accepted')} className="rounded-xl bg-leaf px-4 py-2 text-sm font-extrabold text-white">{t('confirmParticipation')}</button>
+                        <button type="button" onClick={() => onVolunteerResponse(application.id, 'declined')} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700">{t('declineParticipation')}</button>
                       </div>
                     </div>
                   )}
                   {application.status === 'accepted' && application.volunteerResponse !== 'pending' && (
-                    <p className="mt-3 text-sm font-bold text-slate-500">{t('volunteerResponse')}: {t(application.volunteerResponse)}</p>
+                    <p className="text-sm font-bold text-slate-500 sm:col-span-2">{t('volunteerResponse')}: {t(application.volunteerResponse)}</p>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -244,9 +261,9 @@ export function ProfilePage({
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <button onClick={() => downloadCertificatePdf(certificate, language)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white">
+                    <button disabled={downloadingCertificateId === certificate.id} onClick={() => handleCertificateDownload(certificate)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white disabled:bg-slate-400">
                       <Download size={17} />
-                      {t('downloadPdf')}
+                      {downloadingCertificateId === certificate.id ? t('preparingPdf') : t('downloadPdf')}
                     </button>
                     <button onClick={() => onVerifyCertificate(certificate.certificateNumber)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean">
                       <ShieldCheck size={17} />

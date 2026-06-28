@@ -87,7 +87,13 @@ export function Navbar({
           )}
         </div>
 
-        <button className="flex-shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-700 lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+        <button
+          type="button"
+          aria-label={t(mobileOpen ? 'closeMenu' : 'openMenu')}
+          aria-expanded={mobileOpen}
+          className="flex-shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-700 lg:hidden"
+          onClick={() => setMobileOpen(!mobileOpen)}
+        >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
@@ -112,7 +118,14 @@ export function Navbar({
                     </div>
                     <div className="grid gap-2">
                       {notifications.slice(0, 3).map((notification) => (
-                        <p key={notification.id} className="text-xs font-semibold leading-5 text-slate-500">{notification.message}</p>
+                        <button
+                          key={notification.id}
+                          type="button"
+                          onClick={() => onNotificationClick?.(notification)}
+                          className="rounded-lg px-2 py-1.5 text-left text-xs font-semibold leading-5 text-slate-500 transition-colors hover:bg-white hover:text-ink"
+                        >
+                          {notification.message}
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -170,8 +183,10 @@ function NotificationBell({ notifications, language, onMarkRead, onNotificationC
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={async () => {
-          setOpen((current) => !current);
+        onClick={() => {
+          const nextOpen = !open;
+          setOpen(nextOpen);
+          if (nextOpen && unread > 0) void onMarkRead?.();
         }}
         className="relative rounded-full border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
         aria-label={t('notifications')}

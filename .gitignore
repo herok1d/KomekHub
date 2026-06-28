@@ -1,7 +1,10 @@
 node_modules
 dist
+.playwright-cli/
+output/
 .env
-.env.local
+.env.*
+!.env.example
 .DS_Store
 *.log
 *.tsbuildinfo

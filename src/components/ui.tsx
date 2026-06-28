@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ArrowRight, Search, X } from 'lucide-react';
+import { ArrowRight, LoaderCircle, Search, X } from 'lucide-react';
 import { labelFor } from '../i18n/labels';
 import { Language } from '../types';
 import { classNames } from '../utils/classNames';
@@ -86,6 +86,18 @@ export function EmptyState({ title, text, action, onAction }: { title: string; t
           {action}
         </button>
       )}
+    </div>
+  );
+}
+
+export function LoadingState({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-14 text-center shadow-soft" role="status" aria-live="polite">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-skysoft text-ocean">
+        <LoaderCircle size={28} className="animate-spin" />
+      </div>
+      <h2 className="mt-5 text-xl font-extrabold text-ink sm:text-2xl">{title}</h2>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">{text}</p>
     </div>
   );
 }

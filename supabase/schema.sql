@@ -86,6 +86,7 @@ create table if not exists public.opportunities (
   volunteer_hours integer not null default 0,
   min_age integer check (min_age is null or (min_age >= 0 and min_age <= 120)),
   certificate_available boolean not null default false,
+  status text not null default 'recruiting' check (status in ('recruiting', 'closed', 'in_progress', 'completed')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -99,10 +100,30 @@ create table if not exists public.applications (
   message text,
   completed_at timestamptz,
   volunteer_hours integer not null default 0,
+  volunteer_response text not null default 'pending' check (volunteer_response in ('pending', 'accepted', 'declined')),
+  assigned_role text,
+  organization_note text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (user_id, opportunity_id)
 );
+
+create or replace function public.set_volunteer_response_on_accept()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.status = 'accepted' and old.status is distinct from 'accepted' then
+    new.volunteer_response := 'pending';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists set_volunteer_response_on_accept on public.applications;
+create trigger set_volunteer_response_on_accept
+  before update of status on public.applications
+  for each row execute function public.set_volunteer_response_on_accept();
 
 -- 5. Saved opportunities let volunteers bookmark listings.
 create table if not exists public.saved_opportunities (
@@ -132,6 +153,19 @@ create table if not exists public.certificates (
 
 create sequence if not exists public.certificate_number_seq;
 
+-- 7. Notifications keep volunteers and organizations informed about application changes.
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  type text not null,
+  title text not null,
+  message text not null,
+  read boolean not null default false,
+  related_application_id uuid references public.applications(id) on delete set null,
+  related_opportunity_id uuid references public.opportunities(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
 -- Helpful indexes for lookups and joins.
 create index if not exists profiles_user_id_idx on public.profiles(user_id);
 create index if not exists organizations_owner_id_idx on public.organizations(owner_id);
@@ -140,6 +174,10 @@ create index if not exists applications_user_id_idx on public.applications(user_
 create index if not exists applications_opportunity_id_idx on public.applications(opportunity_id);
 create index if not exists saved_opportunities_user_id_idx on public.saved_opportunities(user_id);
 create index if not exists certificates_certificate_number_idx on public.certificates(certificate_number);
+create index if not exists opportunities_status_idx on public.opportunities(status);
+create index if not exists applications_volunteer_response_idx on public.applications(volunteer_response);
+create index if not exists notifications_user_created_idx on public.notifications(user_id, created_at desc);
+create index if not exists notifications_unread_idx on public.notifications(user_id, read);
 
 -- Enable RLS for every table.
 alter table public.profiles enable row level security;
@@ -148,6 +186,21 @@ alter table public.opportunities enable row level security;
 alter table public.applications enable row level security;
 alter table public.saved_opportunities enable row level security;
 alter table public.certificates enable row level security;
+alter table public.notifications enable row level security;
+
+-- Notifications: recipients read/update their own records; authenticated actions may create them.
+create policy "Users can read own notifications"
+  on public.notifications for select
+  using (auth.uid() = user_id);
+
+create policy "Users can update own notifications"
+  on public.notifications for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "Authenticated users can create notifications"
+  on public.notifications for insert
+  with check (auth.role() = 'authenticated');
 
 -- Profiles: users manage only their own profile.
 drop policy if exists "Profiles are readable by owner" on public.profiles;

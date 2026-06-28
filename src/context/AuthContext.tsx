@@ -18,7 +18,7 @@ type AuthContextValue = {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (input: SignUpInput) => Promise<void>;
+  signUp: (input: SignUpInput) => Promise<{ requiresEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -175,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (import.meta.env.DEV) console.error('[KomekHub auth] profile upsert error', profileError);
       throw profileError;
     }
+    return { requiresEmailConfirmation: !data.session };
   }, [ensureAndSetProfile]);
 
   const signOut = useCallback(async () => {

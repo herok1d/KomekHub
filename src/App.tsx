@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Footer, Navbar } from './components/Layout';
-import { ConfirmationModal, EmptyState, Toast } from './components/ui';
+import { ConfirmationModal, EmptyState, LoadingState, Toast } from './components/ui';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { categories, initialFilters } from './data/mockData';
 import { labelFor } from './i18n/labels';
@@ -79,7 +79,8 @@ function KomekHubApp() {
         setSelectedId((current) => current || opportunityRows[0]?.id || '');
       } catch (error) {
         if (!isMounted) return;
-        setDataError(error instanceof Error ? error.message : 'Failed to load Supabase data.');
+        if (import.meta.env.DEV) console.error('[KomekHub marketplace] Failed to load data', error);
+        setDataError('marketplace');
       } finally {
         if (isMounted) setIsLoadingData(false);
       }
@@ -114,21 +115,29 @@ function KomekHubApp() {
 
       setIsLoadingUserActions(true);
       try {
-        const [savedOpportunityRows, userApplications, userCertificates, userNotifications] = await Promise.all([
+        const [savedResult, applicationsResult, certificatesResult, notificationsResult] = await Promise.allSettled([
           getSavedOpportunities(user.id),
           getUserApplications(user.id),
           getUserCertificates(user.id),
           getUserNotifications(user.id),
         ]);
         if (!isMounted) return;
-        setSavedOpportunities(savedOpportunityRows);
-        setSavedIds(savedOpportunityRows.map((opportunity) => opportunity.id));
-        setApplications(userApplications);
-        setCertificates(userCertificates);
-        setNotifications(userNotifications);
-      } catch (error) {
-        if (import.meta.env.DEV) console.error('[KomekHub actions] Failed to load user actions', { userId: user.id, error });
-        if (isMounted) showToast(error instanceof Error ? error.message : t('failedToLoadUserActions'));
+        if (savedResult.status === 'fulfilled') {
+          setSavedOpportunities(savedResult.value);
+          setSavedIds(savedResult.value.map((opportunity) => opportunity.id));
+        } else {
+          setSavedOpportunities([]);
+          setSavedIds([]);
+        }
+        setApplications(applicationsResult.status === 'fulfilled' ? applicationsResult.value : []);
+        setCertificates(certificatesResult.status === 'fulfilled' ? certificatesResult.value : []);
+        setNotifications(notificationsResult.status === 'fulfilled' ? notificationsResult.value : []);
+
+        const failures = [savedResult, applicationsResult, certificatesResult, notificationsResult].filter((result) => result.status === 'rejected');
+        if (failures.length > 0) {
+          if (import.meta.env.DEV) console.error('[KomekHub actions] Some user data failed to load', { userId: user.id, failures });
+          showToast(t('failedToLoadUserActions'));
+        }
       } finally {
         if (isMounted) setIsLoadingUserActions(false);
       }
@@ -150,11 +159,18 @@ function KomekHubApp() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && page === 'dashboard' && !user) {
+    if (!authLoading && (page === 'dashboard' || page === 'profile') && !user) {
       setPage('sign-in');
       window.history.replaceState({}, '', '/sign-in');
     }
   }, [authLoading, page, user?.id]);
+
+  useEffect(() => {
+    if (!authLoading && page === 'profile' && profile?.role === 'organization') {
+      setPage('dashboard');
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [authLoading, page, profile?.role]);
 
   const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0];
   const applicationByOpportunity = useMemo(() => {
@@ -286,7 +302,7 @@ function KomekHubApp() {
       showToast(t(isSaved ? 'saved' : 'unsaved'));
     } catch (error) {
       if (import.meta.env.DEV) console.error('[KomekHub actions] Save failed', { userId: user.id, opportunityId: id, error });
-      showToast(error instanceof Error ? `${t('failedToSaveOpportunity')}: ${error.message}` : t('failedToSaveOpportunity'));
+      showToast(t('failedToSaveOpportunity'));
     }
   }
 
@@ -330,7 +346,7 @@ function KomekHubApp() {
       showToast(t('applicationSent'));
     } catch (error) {
       if (import.meta.env.DEV) console.error('[KomekHub actions] Apply failed', { userId: user.id, opportunityId: id, error });
-      showToast(error instanceof Error ? `${t('failedToApply')}: ${error.message}` : t('failedToApply'));
+      showToast(t('failedToApply'));
     }
   }
 
@@ -353,7 +369,8 @@ function KomekHubApp() {
       setPendingWithdrawOpportunityId('');
       showToast(t('applicationWithdrawn'));
     } catch (error) {
-      showToast(error instanceof Error ? `${t('failedToWithdrawApplication')}: ${error.message}` : t('failedToWithdrawApplication'));
+      if (import.meta.env.DEV) console.error('[KomekHub actions] Withdraw failed', { applicationId: application.id, error });
+      showToast(t('failedToWithdrawApplication'));
     } finally {
       setIsWithdrawing(false);
     }
@@ -361,14 +378,24 @@ function KomekHubApp() {
 
   async function markNotificationsRead() {
     if (!user) return;
-    await markAllNotificationsRead(user.id);
-    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+    try {
+      await markAllNotificationsRead(user.id);
+      setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('[KomekHub notifications] Failed to mark all as read', error);
+      showToast(t('notificationUpdateFailed'));
+    }
   }
 
   async function handleNotificationClick(notification: Notification) {
     if (!notification.read) {
-      await markNotificationRead(notification.id);
-      setNotifications((current) => current.map((item) => (item.id === notification.id ? { ...item, read: true } : item)));
+      try {
+        await markNotificationRead(notification.id);
+        setNotifications((current) => current.map((item) => (item.id === notification.id ? { ...item, read: true } : item)));
+      } catch (error) {
+        if (import.meta.env.DEV) console.error('[KomekHub notifications] Failed to mark as read', { notificationId: notification.id, error });
+        showToast(t('notificationUpdateFailed'));
+      }
     }
     if (notification.relatedOpportunityId) setSelectedId(notification.relatedOpportunityId);
     if (profile?.role === 'organization' || notification.type.startsWith('volunteer_') || notification.type === 'application_received') {
@@ -383,22 +410,27 @@ function KomekHubApp() {
   }
 
   async function respondToApplication(applicationId: string, response: 'accepted' | 'declined') {
-    await updateVolunteerResponse(applicationId, response);
-    const application = applications.find((item) => item.id === applicationId);
-    const opportunity = opportunities.find((item) => item.id === application?.opportunityId);
-    const organizationOwner = organizations.find((item) => item.id === opportunity?.organizationId)?.ownerId;
-    if (organizationOwner && application && opportunity) {
-      await createNotification({
-        userId: organizationOwner,
-        type: `volunteer_${response}`,
-        title: t(response === 'accepted' ? 'participationConfirmed' : 'participationDeclined'),
-        message: `${application.volunteerName} ${response === 'accepted' ? t('participationConfirmed') : t('participationDeclined')}: ${localize(opportunity.title)}`,
-        relatedApplicationId: application.id,
-        relatedOpportunityId: opportunity.id,
-      });
+    try {
+      await updateVolunteerResponse(applicationId, response);
+      const application = applications.find((item) => item.id === applicationId);
+      const opportunity = opportunities.find((item) => item.id === application?.opportunityId);
+      const organizationOwner = organizations.find((item) => item.id === opportunity?.organizationId)?.ownerId;
+      if (organizationOwner && application && opportunity) {
+        await createNotification({
+          userId: organizationOwner,
+          type: `volunteer_${response}`,
+          title: t(response === 'accepted' ? 'participationConfirmed' : 'participationDeclined'),
+          message: `${application.volunteerName} ${response === 'accepted' ? t('participationConfirmed') : t('participationDeclined')}: ${localize(opportunity.title)}`,
+          relatedApplicationId: application.id,
+          relatedOpportunityId: opportunity.id,
+        });
+      }
+      setApplications((current) => current.map((application) => (application.id === applicationId ? { ...application, volunteerResponse: response } : application)));
+      showToast(t(response === 'accepted' ? 'participationConfirmed' : 'participationDeclined'));
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('[KomekHub applications] Volunteer response failed', { applicationId, response, error });
+      showToast(t('participationUpdateFailed'));
     }
-    setApplications((current) => current.map((application) => (application.id === applicationId ? { ...application, volunteerResponse: response } : application)));
-    showToast(t(response === 'accepted' ? 'participationConfirmed' : 'participationDeclined'));
   }
 
   function showToast(message: string, options?: Pick<ToastState, 'action' | 'onAction'>) {
@@ -412,15 +444,22 @@ function KomekHubApp() {
   }
 
   async function handleSignOut() {
-    await signOut();
-    showToast(t('signedOut'));
-    setPageAndPath('home');
+    try {
+      await signOut();
+      showToast(t('signedOut'));
+      setPageAndPath('home');
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('[KomekHub auth] Sign out failed', error);
+      showToast(t('signOutFailed'));
+    }
   }
 
   function handleAuthSuccess() {
     showToast(t('authSuccess'));
     setPageAndPath('home');
   }
+
+  const isStandalonePage = page === 'sign-in' || page === 'sign-up' || page === 'verify';
 
   return (
     <div className={`min-h-screen bg-mist text-ink ${language !== 'en' ? 'ru-copy' : ''}`}>
@@ -439,14 +478,21 @@ function KomekHubApp() {
         onNotificationClick={handleNotificationClick}
       />
 
-      {(isLoadingData || authLoading || isLoadingUserActions) && (
+      {authLoading && (
         <DataState
-          title={t('loadingSupabaseData')}
-          text={t('loadingSupabaseDataText')}
+          title={t('loadingAccount')}
+          text={t('loadingAccountText')}
+          loading
         />
       )}
-      {!isLoadingData && !authLoading && !isLoadingUserActions && dataError && (
-        <DataState title={t('supabaseDataLoadFailed')} text={dataError} />
+      {!authLoading && !isStandalonePage && isLoadingData && (
+        <DataState title={t('loadingSupabaseData')} text={t('loadingSupabaseDataText')} loading />
+      )}
+      {!authLoading && !isStandalonePage && !isLoadingData && isLoadingUserActions && (
+        <DataState title={t('loadingUserData')} text={t('loadingUserDataText')} loading />
+      )}
+      {!authLoading && !isStandalonePage && !isLoadingData && !isLoadingUserActions && dataError && (
+        <DataState title={t('supabaseDataLoadFailed')} text={t('marketplaceLoadFailedText')} action={t('retry')} onAction={() => window.location.reload()} />
       )}
       {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'home' && (
         <HomePage
@@ -542,9 +588,9 @@ function KomekHubApp() {
           onMarketplaceChanged={refreshMarketplaceData}
         />
       )}
-      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'verify' && <VerifyCertificatePage language={language} initialNumber={certificateToVerify} />}
-      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-in' && <SignInPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
-      {!isLoadingData && !authLoading && !isLoadingUserActions && !dataError && page === 'sign-up' && <SignUpPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
+      {!authLoading && page === 'verify' && <VerifyCertificatePage language={language} initialNumber={certificateToVerify} />}
+      {!authLoading && page === 'sign-in' && <SignInPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
+      {!authLoading && page === 'sign-up' && <SignUpPage language={language} onNavigate={navigate} onSuccess={handleAuthSuccess} />}
 
       <Footer language={language} onNavigate={navigate} userRole={profile?.role} />
       <ConfirmationModal
@@ -569,10 +615,10 @@ function KomekHubApp() {
   );
 }
 
-function DataState({ title, text }: { title: string; text: string }) {
+function DataState({ title, text, loading = false, action, onAction }: { title: string; text: string; loading?: boolean; action?: string; onAction?: () => void }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-      <EmptyState title={title} text={text} />
+      {loading ? <LoadingState title={title} text={text} /> : <EmptyState title={title} text={text} action={action} onAction={onAction} />}
     </main>
   );
 }
