@@ -98,7 +98,7 @@ export function SignUpPage({ language, onNavigate, onSuccess }: { language: Lang
                   key={item}
                   type="button"
                   onClick={() => setRole(item)}
-                  className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-extrabold transition ${
+                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-extrabold transition ${
                     role === item ? 'bg-ink text-white' : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -138,14 +138,14 @@ export function SignUpPage({ language, onNavigate, onSuccess }: { language: Lang
 
 function AuthShell({ eyebrow, title, subtitle, children }: { eyebrow: string; title: string; subtitle: string; children: ReactNode }) {
   return (
-    <main className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-      <section className="flex min-h-[280px] flex-col justify-end rounded-[2rem] bg-[url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center p-6 text-white shadow-soft sm:p-8 lg:min-h-[560px]">
+    <main className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
+      <section className="flex min-h-[220px] flex-col justify-end rounded-3xl bg-[url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1400&q=80')] bg-cover bg-center p-5 text-white shadow-soft sm:min-h-[280px] sm:rounded-[2rem] sm:p-8 lg:min-h-[560px]">
         <p className="text-sm font-extrabold uppercase tracking-wide text-white/80">{eyebrow}</p>
-        <h1 className="mt-3 max-w-xl text-4xl font-extrabold tracking-tight sm:text-5xl">{title}</h1>
-        <p className="mt-4 max-w-xl text-base leading-7 text-white/86">{subtitle}</p>
+        <h1 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight sm:text-5xl">{title}</h1>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-white/90 sm:mt-4 sm:text-base sm:leading-7">{subtitle}</p>
       </section>
       <section className="flex items-center">
-        <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">{children}</div>
+        <div className="w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-soft sm:rounded-[2rem] sm:p-8">{children}</div>
       </section>
     </main>
   );
@@ -189,7 +189,7 @@ function AuthInput({
           minLength={type === 'password' ? 6 : undefined}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="h-14 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-bold text-ink shadow-sm focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
+          className="h-14 w-full min-w-0 rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-bold text-ink shadow-sm focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
         />
       </span>
     </label>
@@ -200,7 +200,7 @@ function AuthSwitch({ text, action, onClick }: { text: string; action: string; o
   return (
     <p className="mt-5 text-center text-sm font-semibold text-slate-500">
       {text}{' '}
-      <button onClick={onClick} className="font-extrabold text-ocean hover:text-blue-700">
+      <button onClick={onClick} className="inline-flex min-h-11 items-center font-extrabold text-ocean hover:text-blue-700">
         {action}
       </button>
     </p>

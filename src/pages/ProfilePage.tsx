@@ -123,19 +123,19 @@ export function ProfilePage({
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
-        <div className="h-28 bg-gradient-to-r from-[#e8f7f1] via-[#edf6ff] to-[#f7faf9] sm:h-36" />
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft sm:rounded-[2rem]">
+        <div className="h-24 bg-gradient-to-r from-[#e8f7f1] via-[#edf6ff] to-[#f7faf9] sm:h-36" />
         <div className="grid gap-7 p-5 sm:p-8 lg:grid-cols-[300px_1fr]">
-          <aside className="-mt-20">
-            <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-[2rem] border-4 border-white bg-skysoft text-ocean shadow-lift">
+          <aside className="-mt-16 min-w-0 sm:-mt-20">
+            <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-3xl border-4 border-white bg-skysoft text-ocean shadow-lift sm:h-32 sm:w-32 sm:rounded-[2rem]">
               {profile.avatarUrl ? (
                 <img src={profile.avatarUrl} alt={profile.fullName} className="h-full w-full object-cover" />
               ) : (
                 <UserRound size={52} strokeWidth={1.8} />
               )}
             </div>
-            <h1 className="mt-5 text-3xl font-extrabold tracking-tight">{profile.fullName || user?.email}</h1>
+            <h1 className="mt-5 break-words text-2xl font-extrabold tracking-tight sm:text-3xl">{profile.fullName || user?.email}</h1>
             <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-500">
               <span className="flex items-center gap-2">
                 <MapPin size={17} />
@@ -150,7 +150,7 @@ export function ProfilePage({
                 {t(profile.role === 'organization' ? 'roleOrganization' : 'roleVolunteer')}
               </span>
             </div>
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 grid gap-3 min-[380px]:grid-cols-2">
               <PortfolioStat value={totalHours} label={t('hoursLogged')} />
               <PortfolioStat value={completedApplications.length} label={t('completedActivities')} />
             </div>
@@ -168,7 +168,7 @@ export function ProfilePage({
                   setError('');
                   setIsEditing((current) => !current);
                 }}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean sm:w-auto"
               >
                 {isEditing ? <X size={17} /> : <Edit3 size={17} />}
                 {t(isEditing ? 'cancel' : 'editProfile')}
@@ -198,13 +198,13 @@ export function ProfilePage({
         {applications.length === 0 ? (
           <EmptyState title={t('applicationHistory')} text={t('noApplicationsYet')} />
         ) : (
-          <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft sm:rounded-[2rem]">
             {applications.map((application) => {
               const opportunity = opportunities.find((item) => item.id === application.opportunityId);
               return (
                 <div
                   key={application.id}
-                  className="grid w-full gap-3 border-b border-slate-100 px-5 py-5 text-left transition-colors last:border-b-0 hover:bg-slate-50 sm:grid-cols-[1fr_auto] sm:items-center"
+                  className="grid w-full min-w-0 gap-3 border-b border-slate-100 px-4 py-5 text-left transition-colors last:border-b-0 hover:bg-slate-50 sm:grid-cols-[1fr_auto] sm:items-center sm:px-5"
                 >
                   <div className="min-w-0">
                     {opportunity ? (
@@ -225,8 +225,8 @@ export function ProfilePage({
                     <div className="rounded-2xl bg-skysoft p-4 sm:col-span-2">
                       <p className="text-sm font-bold text-ocean">{t('acceptedConfirmPrompt').replace('[Opportunity title]', opportunity ? localize(opportunity.title) : '')}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={() => onVolunteerResponse(application.id, 'accepted')} className="rounded-xl bg-leaf px-4 py-2 text-sm font-extrabold text-white">{t('confirmParticipation')}</button>
-                        <button type="button" onClick={() => onVolunteerResponse(application.id, 'declined')} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700">{t('declineParticipation')}</button>
+                        <button type="button" onClick={() => onVolunteerResponse(application.id, 'accepted')} className="min-h-11 rounded-xl bg-leaf px-4 py-2 text-sm font-extrabold text-white">{t('confirmParticipation')}</button>
+                        <button type="button" onClick={() => onVolunteerResponse(application.id, 'declined')} className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700">{t('declineParticipation')}</button>
                       </div>
                     </div>
                   )}
@@ -245,14 +245,14 @@ export function ProfilePage({
         <div className="grid gap-4">
           {certificates.length === 0 && <EmptyState title={t('certificates')} text={t('noCertificatesYet')} />}
           {certificates.map((certificate) => (
-              <div key={certificate.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+              <div key={certificate.id} className="min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5">
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-extrabold text-leaf">
                       <Award size={18} />
                       {t('certificateIssued')}
                     </div>
-                    <h3 className="text-xl font-extrabold">{localize(certificate.opportunityTitle)}</h3>
+                    <h3 className="break-words text-lg font-extrabold sm:text-xl">{localize(certificate.opportunityTitle)}</h3>
                     <p className="mt-1 text-sm font-semibold text-slate-500">{certificate.organizationName}</p>
                     <div className="mt-3 flex flex-wrap gap-2 text-sm">
                       <Pill label={`${certificate.volunteerHours} ${t('volunteerHours')}`} strong />
@@ -261,11 +261,11 @@ export function ProfilePage({
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <button disabled={downloadingCertificateId === certificate.id} onClick={() => handleCertificateDownload(certificate)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white disabled:bg-slate-400">
+                    <button disabled={downloadingCertificateId === certificate.id} onClick={() => handleCertificateDownload(certificate)} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-extrabold text-white disabled:bg-slate-400 sm:w-auto">
                       <Download size={17} />
                       {downloadingCertificateId === certificate.id ? t('preparingPdf') : t('downloadPdf')}
                     </button>
-                    <button onClick={() => onVerifyCertificate(certificate.certificateNumber)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean">
+                    <button onClick={() => onVerifyCertificate(certificate.certificateNumber)} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-extrabold text-slate-700 transition-colors hover:border-ocean hover:text-ocean sm:w-auto">
                       <ShieldCheck size={17} />
                       {t('verify')}
                     </button>

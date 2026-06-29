@@ -14,13 +14,13 @@ export function SearchInput({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-14 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-medium text-ink shadow-sm transition focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
+        className="h-14 w-full min-w-0 rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-medium text-ink shadow-sm transition focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
       />
     </div>
   );
@@ -38,10 +38,10 @@ export function SectionHeader({
   onAction?: () => void;
 }) {
   return (
-    <div className="mb-7 flex items-end justify-between gap-4">
-      <div>
+    <div className="mb-6 flex min-w-0 items-end justify-between gap-4 sm:mb-7">
+      <div className="min-w-0">
         <p className="text-sm font-bold uppercase tracking-wide text-leaf">{eyebrow}</p>
-        <h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h2>
+        <h2 className="mt-2 break-words text-xl font-extrabold tracking-tight min-[380px]:text-2xl sm:text-3xl">{title}</h2>
       </div>
       {action && (
         <button
@@ -66,16 +66,16 @@ export function Badge({ label, language = 'en' }: { label: string; language?: La
           ? 'bg-amber-50 text-amber-700'
           : 'bg-mint text-leaf';
 
-  return <span className={classNames('rounded-full px-3.5 py-1.5 text-[13px] font-extrabold leading-none', tone)}>{labelFor(label, language)}</span>;
+  return <span className={classNames('max-w-full rounded-full px-3.5 py-1.5 text-[13px] font-extrabold leading-tight', tone)}>{labelFor(label, language)}</span>;
 }
 
 export function Pill({ label, strong, language = 'en' }: { label: string; strong?: boolean; language?: Language }) {
-  return <span className={classNames('rounded-full px-3 py-1.5 text-[13px] font-bold leading-none', strong ? 'bg-skysoft text-ocean' : 'bg-slate-100 text-slate-600')}>{labelFor(label, language)}</span>;
+  return <span className={classNames('max-w-full break-words rounded-full px-3 py-1.5 text-[13px] font-bold leading-tight', strong ? 'bg-skysoft text-ocean' : 'bg-slate-100 text-slate-600')}>{labelFor(label, language)}</span>;
 }
 
 export function EmptyState({ title, text, action, onAction }: { title: string; text: string; action?: string; onAction?: () => void }) {
   return (
-    <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-soft">
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center shadow-soft sm:rounded-[2rem] sm:px-6 sm:py-14">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-mint text-leaf">
         <Search size={28} />
       </div>
@@ -92,7 +92,7 @@ export function EmptyState({ title, text, action, onAction }: { title: string; t
 
 export function LoadingState({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-14 text-center shadow-soft" role="status" aria-live="polite">
+    <div className="rounded-3xl border border-slate-200 bg-white px-5 py-10 text-center shadow-soft sm:rounded-[2rem] sm:px-6 sm:py-14" role="status" aria-live="polite">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-skysoft text-ocean">
         <LoaderCircle size={28} className="animate-spin" />
       </div>
@@ -104,11 +104,11 @@ export function LoadingState({ title, text }: { title: string; text: string }) {
 
 export function Toast({ message, icon, action, onAction }: { message: string; icon?: ReactNode; action?: string; onAction?: () => void }) {
   return (
-    <div className="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 items-center gap-3 rounded-2xl bg-ink px-5 py-4 text-sm font-extrabold text-white shadow-lift">
+    <div className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col items-stretch gap-3 rounded-2xl bg-ink px-4 py-4 text-sm font-extrabold text-white shadow-lift sm:bottom-5 sm:flex-row sm:items-center sm:px-5">
       {icon}
       <span className="min-w-0 flex-1">{message}</span>
       {action && onAction && (
-        <button type="button" onClick={onAction} className="shrink-0 rounded-xl bg-white/12 px-3 py-2 text-xs text-white transition-colors hover:bg-white/20">
+        <button type="button" onClick={onAction} className="min-h-11 shrink-0 rounded-xl bg-white/12 px-3 py-2 text-xs text-white transition-colors hover:bg-white/20">
           {action}
         </button>
       )}

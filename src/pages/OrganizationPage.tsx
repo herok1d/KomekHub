@@ -75,14 +75,14 @@ export function OrganizationPage({
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <SectionHeader eyebrow={t('navOrganizations')} title={t('organizationsTitle')} />
       <div className="mb-5 max-w-2xl">
         <SearchInput value={search} onChange={setSearch} placeholder={t('organizationSearchPlaceholder')} />
       </div>
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        <aside className="h-fit rounded-[2rem] border border-slate-200 bg-white p-4 shadow-soft">
-          <div className="grid gap-3">
+        <aside className="h-fit min-w-0 rounded-3xl border border-slate-200 bg-white p-3 shadow-soft sm:p-4 lg:rounded-[2rem]">
+          <div className="flex snap-x gap-3 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
             {filteredOrganizations.map((organization) => {
               const active = organization.id === selected.id;
               const count = opportunities.filter((item) => item.organizationId === organization.id || item.organization === organization.name).length;
@@ -90,12 +90,12 @@ export function OrganizationPage({
                 <button
                   key={organization.id ?? organization.name}
                   onClick={() => onOpenOrganization(organization.id)}
-                  className={`rounded-2xl border p-4 text-left transition-colors ${active ? 'border-ocean bg-skysoft' : 'border-slate-100 hover:border-ocean/30 hover:bg-slate-50'}`}
+                  className={`min-h-32 min-w-[min(17rem,calc(100vw-4.5rem))] snap-start rounded-2xl border p-4 text-left transition-colors lg:min-h-0 lg:min-w-0 ${active ? 'border-ocean bg-skysoft' : 'border-slate-100 hover:border-ocean/30 hover:bg-slate-50'}`}
                 >
                   <div className="flex items-center gap-4">
                     <img src={organization.logo} alt={organization.name} className="h-14 w-14 rounded-2xl object-cover" />
-                    <div>
-                      <h3 className="font-extrabold text-slate-900">{organization.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="break-words font-extrabold text-slate-900">{organization.name}</h3>
                       <p className="text-sm font-semibold text-slate-500">{labelFor(organization.city, language)}</p>
                     </div>
                   </div>
@@ -108,23 +108,23 @@ export function OrganizationPage({
         </aside>
 
         <section className="min-w-0">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft sm:rounded-[2rem] sm:p-8">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
-              <div className="flex gap-4">
-                <img src={selected.logo} alt={selected.name} className="h-20 w-20 rounded-3xl object-cover shadow-soft" />
-                <div>
+              <div className="flex min-w-0 flex-col gap-4 min-[400px]:flex-row">
+                <img src={selected.logo} alt={selected.name} className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-soft sm:h-20 sm:w-20 sm:rounded-3xl" />
+                <div className="min-w-0">
                   <p className="text-sm font-extrabold uppercase tracking-wide text-leaf">{t('organizationProfile')}</p>
-                  <h1 className="mt-1 text-3xl font-extrabold tracking-tight">{selected.name}</h1>
+                  <h1 className="mt-1 break-words text-2xl font-extrabold tracking-tight sm:text-3xl">{selected.name}</h1>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold text-slate-500">
                     <span className="flex items-center gap-1.5"><MapPin size={16} />{labelFor(selected.city, language)}</span>
-                    {selected.contactEmail && <span className="flex items-center gap-1.5"><Mail size={16} />{selected.contactEmail}</span>}
+                    {selected.contactEmail && <span className="flex min-w-0 items-center gap-1.5 break-all"><Mail size={16} className="shrink-0" />{selected.contactEmail}</span>}
                     {selected.phone && <span className="flex items-center gap-1.5"><Phone size={16} />{selected.phone}</span>}
                     {selected.website && <a href={selected.website} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-ocean"><ExternalLink size={16} />{t('website')}</a>}
                   </div>
                 </div>
               </div>
               {canPostForSelectedOrganization && (
-                <button onClick={() => onNavigate('post')} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-slate-800">
+                <button onClick={() => onNavigate('post')} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-slate-800 md:w-auto">
                   <BriefcaseBusiness size={18} />{t('postOpportunity')}
                 </button>
               )}

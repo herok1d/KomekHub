@@ -78,7 +78,7 @@ function LanguageSelect({ label, values, selected, language, onToggle }: { label
               key={value}
               type="button"
               onClick={() => onToggle(value)}
-              className={`flex h-10 min-w-0 items-center justify-center rounded-xl border px-2 text-center text-xs font-extrabold transition-colors ${
+              className={`flex h-11 min-w-0 items-center justify-center rounded-xl border px-1.5 text-center text-[11px] font-extrabold transition-colors min-[400px]:px-2 min-[400px]:text-xs ${
                 active
                   ? 'border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm'
                   : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -105,7 +105,7 @@ function BadgeSelect({ label, values, selected, language, onToggle }: { label: s
               key={value}
               type="button"
               onClick={() => onToggle(value)}
-              className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-extrabold transition-colors ${
+              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-extrabold transition-colors ${
                 active
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                   : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'

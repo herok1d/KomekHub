@@ -69,7 +69,7 @@ export function SelectCombobox({
   }
 
   return (
-    <div ref={wrapperRef} className="relative min-w-[170px]">
+    <div ref={wrapperRef} className="relative w-full min-w-0 sm:min-w-[170px]">
       <span className={labelClassName ?? 'mb-1.5 block text-[13px] font-extrabold uppercase tracking-wide text-slate-500'}>{label}</span>
       <button
         type="button"
@@ -77,7 +77,7 @@ export function SelectCombobox({
         onClick={() => setOpen((current) => !current)}
         onKeyDown={onKeyDown}
         className={classNames(
-          'group flex h-12 w-full min-w-[170px] items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-left text-[15px] font-bold text-ink shadow-sm transition-colors duration-200 focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15',
+          'group flex h-12 w-full min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-left text-[15px] font-bold text-ink shadow-sm transition-colors duration-200 focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15 sm:min-w-[170px]',
           open && 'border-ocean ring-4 ring-ocean/10',
           disabled ? 'cursor-not-allowed opacity-60' : 'hover:border-slate-300',
         )}
@@ -92,7 +92,7 @@ export function SelectCombobox({
       </button>
       <div
         className={classNames(
-          'absolute left-0 top-[calc(100%+8px)] z-[100] max-h-72 min-w-full origin-top overflow-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift transition duration-150',
+          'absolute left-0 top-[calc(100%+8px)] z-[100] max-h-72 w-full min-w-0 origin-top overflow-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift transition duration-150 sm:min-w-full',
           open ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-1 opacity-0',
         )}
         role="listbox"
@@ -110,7 +110,7 @@ export function SelectCombobox({
             role="option"
             aria-selected={option.value === value}
           >
-            <span>{option.label}</span>
+            <span className="min-w-0 break-words">{option.label}</span>
             {option.value === value && <Check size={16} />}
           </button>
         ))}

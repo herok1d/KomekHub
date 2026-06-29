@@ -44,9 +44,9 @@ export function OpportunityCard({
   const locationLabel = opportunity.format === 'Online' ? labelFor('Online', language) : labelFor(opportunity.city, language);
 
   return (
-    <article className="group flex min-h-[360px] flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition-shadow duration-200 hover:border-ocean/30 hover:shadow-lift sm:p-6">
+    <article className="group flex min-h-0 min-w-0 flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-soft transition-shadow duration-200 hover:border-ocean/30 hover:shadow-lift sm:min-h-[360px] sm:p-6">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <div className="mb-3 flex flex-wrap gap-2">
             {badges.map((badge) => (
               <Badge key={badge} label={badge} language={language} />
@@ -56,7 +56,7 @@ export function OpportunityCard({
               {t(opportunity.status)}
             </span>
           </div>
-          <button onClick={onOpen} className="text-left text-xl font-extrabold tracking-tight transition group-hover:text-ocean">
+          <button onClick={onOpen} className="flex min-h-11 max-w-full items-center break-words text-left text-lg font-extrabold tracking-tight transition group-hover:text-ocean sm:text-xl">
             {localize(opportunity.title)}
           </button>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-500">
@@ -66,9 +66,9 @@ export function OpportunityCard({
                 event.stopPropagation();
                 onOpenOrganization?.();
               }}
-              className="flex items-center gap-1.5 transition hover:text-ocean"
+              className="flex min-h-11 min-w-0 items-center gap-1.5 break-words text-left transition hover:text-ocean"
             >
-              <Building2 size={16} />
+              <Building2 size={16} className="mt-0.5 shrink-0" />
               {opportunity.organization}
             </button>
             <span className="flex items-center gap-1.5">
@@ -84,7 +84,7 @@ export function OpportunityCard({
         <button
           onClick={onToggleSave}
           className={classNames(
-            'rounded-2xl border p-2.5 transition',
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition',
             isSaved ? 'border-leaf bg-mint text-leaf' : 'border-slate-200 text-slate-500 hover:border-ocean hover:text-ocean',
           )}
           aria-label={isSaved ? t('removeSaved') : t('save')}
@@ -93,7 +93,7 @@ export function OpportunityCard({
         </button>
       </div>
 
-      <p className="mt-4 text-[15px] leading-7 text-slate-600">{localize(opportunity.description)}</p>
+      <p className="mt-4 break-words text-sm leading-6 text-slate-600 sm:text-[15px] sm:leading-7">{localize(opportunity.description)}</p>
       <div className="mt-4 grid gap-2 text-[15px] font-semibold text-slate-500 sm:grid-cols-2">
         <span className="flex items-center gap-2">
           <Languages size={17} />
@@ -126,14 +126,14 @@ export function OpportunityCard({
           onClick={canWithdraw ? onWithdraw : onApply}
           disabled={applyDisabled}
           className={classNames(
-            'pressable flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-extrabold text-white transition',
+            'pressable flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-3 text-center text-sm font-extrabold text-white transition sm:px-5 sm:text-base',
             applyDisabled ? 'bg-slate-400' : canWithdraw ? 'bg-slate-600 hover:bg-slate-700' : 'bg-leaf hover:bg-emerald-700',
           )}
         >
           {activeApplication ? <CheckCircle2 size={17} /> : <Send size={17} />}
           {applicationLabel}
         </button>
-        <button onClick={onOpen} className="pressable flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-base font-extrabold text-ink transition hover:border-ocean hover:text-ocean">
+        <button onClick={onOpen} className="pressable flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-extrabold text-ink transition hover:border-ocean hover:text-ocean sm:px-5 sm:text-base">
           {t('viewDetails')}
           <ArrowRight size={17} />
         </button>

@@ -53,9 +53,9 @@ export function DetailPage({
   const locationLabel = opportunity.format === 'Online' ? labelFor('Online', language) : labelFor(opportunity.city, language);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
+        <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-soft sm:rounded-[2rem] sm:p-8">
           <div className="mb-4 flex flex-wrap gap-2">
             {badges.map((badge) => (
               <Badge key={badge} label={badge} language={language} />
@@ -65,7 +65,7 @@ export function DetailPage({
               {t(opportunity.status)}
             </span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">{localize(opportunity.title)}</h1>
+          <h1 className="break-words text-2xl font-extrabold tracking-tight sm:text-5xl">{localize(opportunity.title)}</h1>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
             <button onClick={() => onOpenOrganization(organization?.id)} className="flex items-center gap-1.5 transition hover:text-ocean">
               <BriefcaseBusiness size={17} />
@@ -102,7 +102,7 @@ export function DetailPage({
         </section>
 
         <aside className="grid h-fit gap-5">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft sm:rounded-[2rem] sm:p-6">
             <button
               onClick={canWithdraw ? onWithdraw : () => onApply(opportunity.id)}
               disabled={applyDisabled}
@@ -121,7 +121,7 @@ export function DetailPage({
             </button>
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft sm:rounded-[2rem] sm:p-6">
             <button onClick={() => onOpenOrganization(organization?.id)} className="text-left text-lg font-extrabold transition hover:text-ocean">{t('aboutOrganization')}</button>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               {organization ? localize(organization.description) : opportunity.organization}

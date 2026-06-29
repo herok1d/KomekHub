@@ -41,12 +41,12 @@ export function VerifyCertificatePage({ language, initialNumber }: { language: L
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
+    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft sm:rounded-[2rem] sm:p-8">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-mint text-leaf">
           <ShieldCheck size={28} />
         </div>
-        <h1 className="mt-5 text-3xl font-extrabold tracking-tight sm:text-4xl">{t('verifyPageTitle')}</h1>
+        <h1 className="mt-5 text-2xl font-extrabold tracking-tight sm:text-4xl">{t('verifyPageTitle')}</h1>
         <p className="mt-3 max-w-2xl text-slate-600">{t('verifyPageSubtitle')}</p>
 
         <form onSubmit={submit} className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -59,12 +59,12 @@ export function VerifyCertificatePage({ language, initialNumber }: { language: L
               className="h-14 w-full rounded-2xl border border-slate-200 pl-12 pr-4 text-base font-bold focus:border-ocean focus:outline-none focus:ring-4 focus:ring-ocean/15"
             />
           </div>
-          <button disabled={loading} className="rounded-2xl bg-ink px-6 py-3 text-base font-extrabold text-white hover:bg-slate-800 disabled:bg-slate-400">{loading ? t('verifying') : t('verify')}</button>
+          <button disabled={loading} className="min-h-14 w-full rounded-2xl bg-ink px-6 py-3 text-base font-extrabold text-white hover:bg-slate-800 disabled:bg-slate-400 sm:w-auto">{loading ? t('verifying') : t('verify')}</button>
         </form>
       </section>
 
       {submitted && (
-        <section className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-soft sm:rounded-[2rem] sm:p-8">
           {loading ? (
             <div className="rounded-3xl bg-slate-50 p-5 text-base font-extrabold text-slate-600">{t('verifying')}</div>
           ) : error ? (
@@ -98,7 +98,7 @@ function VerifyRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-mist p-4">
       <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-base font-extrabold text-ink">{value}</p>
+      <p className="mt-1 break-words text-base font-extrabold text-ink">{value}</p>
     </div>
   );
 }
